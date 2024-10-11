@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0 3em;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color:  white;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+.footer{
+  width: 100%;
+  background-color: white;
+  color: black;
+}

@@ -10,14 +10,17 @@ import {
   PopoverGroup,
   PopoverPanel,
   Transition,
-} from '../../node_modules/@headlessui/react'
+} from '@headlessui/react'
 import {
   Bars3Icon,
   ChartPieIcon,
   CursorArrowRaysIcon,
   XMarkIcon,
-} from '../../node_modules/@heroicons/react/24/outline'
-import { ChevronDownIcon, CurrencyDollarIcon } from '../../node_modules/@heroicons/react/20/solid'
+} from '@heroicons/react/24/outline'
+import { ChevronDownIcon, CurrencyDollarIcon } from '@heroicons/react/20/solid'
+
+// Import your logo
+import logo from './images/logo.jpg'; // Update the path to your logo
 
 const products = [
   { name: 'Templates', description: 'Get a better full code source for building', href: '#', icon: ChartPieIcon },
@@ -36,8 +39,10 @@ export default function Header() {
     <header className="bg-white">
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
         <div className="flex lg:flex-1">
-          <a href="#" target='_blank' className="-m-1.5 p-1.5">
-          <p className="text-lg font-semibold leading-7 text-indigo-600 tracking-wider ">RenoX</p>
+          <a href="#" target='_blank' className="-m-1.5 p-1.5 flex items-center">
+            {/* Add logo and name next to each other */}
+            <img src={logo} alt="CrashChain Logo" className="h-8 mr-2" /> {/* Adjust height as needed */}
+            <p className="text-lg font-semibold leading-7 text-indigo-600 tracking-wider">CrashChain</p>
           </a>
         </div>
         <div className="flex lg:hidden">
@@ -106,9 +111,9 @@ export default function Header() {
         <div className="fixed inset-0 z-10" />
         <DialogPanel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
           <div className="flex items-center justify-between">
-            <a href="#" className="-m-1.5 p-1.5">
-              <span className="sr-only">RenoX</span>
-              <p className="text-lg font-semibold leading-7 text-indigo-600">RenoX</p>
+            <a href="#" className="-m-1.5 p-1.5 flex items-center">
+              <img src={logo} alt="CrashChain Logo" className="h-8 mr-2" /> {/* Adjust height as needed */}
+              <p className="text-lg font-semibold leading-7 text-indigo-600">CrashChain</p>
             </a>
             <button
               type="button"

@@ -4,6 +4,7 @@ import Header from './components/header';
 import Login from './components/login';
 import SignUp from './components/signup';
 import DashBoard from './pages/dashboard';
+import ReportPage from './pages/ReportPage';  // Import the ReportPage component
 import ContentSection from './components/contentsection';
 import Hero from './components/hero';
 import Footer from './components/footer';
@@ -26,6 +27,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/dashboard" element={<DashBoard />} />
+        {/* Add the new route for the ReportPage */}
+        <Route path="/report" element={<ReportPage />} />
       </Routes>
       <Footer />
     </Router>

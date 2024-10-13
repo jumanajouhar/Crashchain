@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crash Metadata DApp</title>
+    <!-- Load Web3.js -->
+    <script src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@1.0.0-beta.36/dist/web3.min.js"></script>
+</head>
+<body>
+
+<h1>Crash Metadata DApp</h1>
+<button onclick="storeSampleData()">Store Sample Data</button>
+<button onclick="verifySampleData()">Verify Sample Data</button>
+
+<script type="text/javascript">
+    let contract;
+    let account;
+
+    // Wait for the window to load
+    window.addEventListener('load', async () => {
+        // Check if MetaMask or other dapp browsers are available
+        if (window.ethereum) {
+            window.web3 = new Web3(window.ethereum);
+            try {
+                await window.ethereum.request({ method: 'eth_requestAccounts' });
+                const accounts = await web3.eth.getAccounts();
+                account = accounts[0];
+                console.log('Connected to MetaMask:', account);
+
+                // Replace with your deployed contract address and ABI
+                const contractAddress = '0xf8e81D47203A594245E36C48e151709F0C19fBe8';
+                const abi = [
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "dataHash",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "vin",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "dataSource",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "location",
+				"type": "string"
+			}
+		],
+		"name": "MetadataStored",
+		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "metadataCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "metadataMapping",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "dataHash",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "vin",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "dataSource",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "location",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_dataHash",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_vin",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_dataSource",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_location",
+				"type": "string"
+			}
+		],
+		"name": "storeMetadata",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "verifyMetadata",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "string",
+						"name": "dataHash",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "vin",
+						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "timestamp",
+						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "dataSource",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "location",
+						"type": "string"
+					}
+				],
+				"internalType": "struct CrashMetadataStorage.CrashMetadata",
+				"name": "",
+				"type": "tuple"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+
+                // Initialize contract
+                contract = new web3.eth.Contract(abi, contractAddress);
+                console.log('Contract loaded:', contract);
+            } catch (error) {
+                console.error('User denied account access', error);
+            }
+        } else if (window.web3) {
+            window.web3 = new Web3(window.web3.currentProvider);
+            console.log('Connected to fallback provider');
+        } else {
+            console.log('Non-Ethereum browser detected. Please install MetaMask.');
+        }
+    });
+
+    // Function to store sample metadata
+    async function storeSampleData() {
+        if (!contract) {
+            console.log('Contract not initialized yet');
+            return;
+        }
+
+        try {
+            await contract.methods.storeMetadata("sampleHash123", "1HGCM82633A123456", "OBD-II", "40.7128N, 74.0060W").send({ from: account });
+            console.log('Metadata stored successfully');
+        } catch (error) {
+            console.error('Error storing metadata', error);
+        }
+    }
+
+    // Function to verify sample metadata
+    async function verifySampleData() {
+        if (!contract) {
+            console.log('Contract not initialized yet');
+            return;
+        }
+
+        try {
+            const result = await contract.methods.verifyMetadata(0).call();
+            console.log('Crash Metadata:', result);
+        } catch (error) {
+            console.error('Error verifying metadata', error);
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -58,7 +58,8 @@ app.post('/store-obd-data', async (req, res) => {
     const dataId = savedData._id.toString(); // MongoDB document ID
     const accounts = await web3.eth.getAccounts();
     await crashContract.methods.storeMetadata(dataId, vin, location)
-      .send({ from: accounts[0] });
+      .send({ from: accounts[0], 
+		gas: 3000000  });
 
     res.json({ message: 'Data stored successfully', dataId });
   } catch (error) {

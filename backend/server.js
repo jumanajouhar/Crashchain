@@ -1,231 +1,85 @@
+require('dotenv').config();
 const express = require('express');
+const bodyParser = require('body-parser');
 const {Web3} = require('web3');
-const dotenv = require('dotenv');
+const mongoose = require('mongoose');
+
+// MongoDB connection
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('MongoDB connected successfully.');
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error.message);
+    process.exit(1);
+  }
+};
+
+connectDB();
+
+// Define MongoDB schema for OBD data
+const obdDataSchema = new mongoose.Schema({
+  vin: String,
+  data: String, // OBD data as JSON
+  location: String,
+  timestamp: { type: Date, default: Date.now }
+});
+
+const OBDData = mongoose.model('OBDData', obdDataSchema);
+
+// Express setup
 const app = express();
-dotenv.config();
+const port = process.env.PORT || 3000;
+app.use(bodyParser.json());
 
-// Enable JSON parsing for requests
-app.use(express.json());
-
-// Connect to Ganache or Ethereum network using Web3
-const web3 = new Web3(new Web3.providers.HttpProvider(process.env.GANACHE_RPC_URL));
-
-// Your deployed contract address and ABI
+// Web3 setup
+const web3 = new Web3(process.env.ETH_PROVIDER);
+const contractABI = require('./blockchain/build/contracts/CrashMetadataStorage.json').abi;
 const contractAddress = process.env.CONTRACT_ADDRESS;
-const abi = [
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "uint256",
-				"name": "index",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "dataHash",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "vin",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "dataSource",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "location",
-				"type": "string"
-			}
-		],
-		"name": "MetadataStored",
-		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "metadataCount",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "metadataMapping",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "dataHash",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "vin",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			},
-			{
-				"internalType": "string",
-				"name": "dataSource",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "location",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_dataHash",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_vin",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_dataSource",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_location",
-				"type": "string"
-			}
-		],
-		"name": "storeMetadata",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "index",
-				"type": "uint256"
-			}
-		],
-		"name": "verifyMetadata",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "string",
-						"name": "dataHash",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "vin",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "timestamp",
-						"type": "uint256"
-					},
-					{
-						"internalType": "string",
-						"name": "dataSource",
-						"type": "string"
-					},
-					{
-						"internalType": "string",
-						"name": "location",
-						"type": "string"
-					}
-				],
-				"internalType": "struct CrashMetadataStorage.CrashMetadata",
-				"name": "",
-				"type": "tuple"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-];
+const crashContract = new web3.eth.Contract(contractABI, contractAddress);
 
-// Initialize contract
-const contract = new web3.eth.Contract(abi, contractAddress);
+// Endpoint to receive ESP32 OBD data
+app.post('/store-obd-data', async (req, res) => {
+  const { vin, data, location } = req.body;
 
-// Your account and private key from Ganache
-const account = web3.eth.accounts.privateKeyToAccount(process.env.PRIVATE_KEY);
-web3.eth.accounts.wallet.add(account);
-web3.eth.defaultAccount = account.address;
+  if (!vin || !data || !location) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
 
-// Store crash metadata on the blockchain
-app.post('/store-metadata', async (req, res) => {
-    const { dataHash, vin, dataSource, location } = req.body;
+  try {
+    // Store full data in MongoDB
+    const obdData = new OBDData({ vin, data, location });
+    const savedData = await obdData.save();
 
-    try {
-        const result = await contract.methods
-            .storeMetadata(dataHash, vin, dataSource, location)
-            .send({ from: account.address, gas: 3000000 });
+    // Store metadata in blockchain
+    const dataId = savedData._id.toString(); // MongoDB document ID
+    const accounts = await web3.eth.getAccounts();
+    await crashContract.methods.storeMetadata(dataId, vin, location)
+      .send({ from: accounts[0] });
 
-        res.json({
-            message: 'Metadata stored successfully',
-            transactionHash: result.transactionHash,
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error storing metadata' });
-    }
+    res.json({ message: 'Data stored successfully', dataId });
+  } catch (error) {
+    console.error('Error storing data:', error);
+    res.status(500).json({ error: 'Error storing data' });
+  }
 });
 
-// Verify metadata by index
+// Endpoint to verify metadata
 app.get('/verify-metadata/:index', async (req, res) => {
-    const { index } = req.params;
+  const { index } = req.params;
 
-    try {
-        const metadata = await contract.methods.verifyMetadata(index).call();
-        res.json(metadata);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Error verifying metadata' });
-    }
+  try {
+    const metadata = await crashContract.methods.getMetadata(index).call();
+    res.json(metadata);
+  } catch (error) {
+    console.error('Error verifying metadata:', error);
+    res.status(500).json({ error: 'Error verifying metadata' });
+  }
 });
 
-// Start the Express server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });

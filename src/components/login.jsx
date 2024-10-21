@@ -40,126 +40,74 @@ const Login = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      backgroundColor: 'white',
-    }}>
-      <div style={{
-        padding: '40px',
-        borderRadius: '10px',
-        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-        textAlign: 'center',
-        width: '400px',
-      }}>
-        {isResettingPassword ? (
-          // Password Reset Form
-          <>
-            <h2 style={{
-              marginBottom: '20px',
-              fontSize: '36px',
-              color: '#007bff',
-              fontWeight: 'bold',
-            }}>
-              Reset Password
-            </h2>
-            <form onSubmit={handlePasswordReset}>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={resetEmail}
-                onChange={(e) => setResetEmail(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  margin: '10px 0',
-                  borderRadius: '5px',
-                  border: '1px solid #ccc',
-                  backgroundColor: 'white',
-                }}
-                required
-              />
-              <button type="submit" style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '16px',
-              }}>
-                Send Reset Email
-              </button>
-            </form>
-            <p style={{ marginTop: '20px', cursor: 'pointer', color: '#007bff' }} onClick={() => setIsResettingPassword(false)}>
-              Back to Login
-            </p>
-          </>
-        ) : (
-          // Login Form
-          <>
-            <h2 style={{
-              marginBottom: '20px',
-              fontSize: '36px',
-              color: '#007bff',
-              fontWeight: 'bold',
-            }}>
-              Login
-            </h2>
-            <form onSubmit={handleLogin}>
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  margin: '10px 0',
-                  borderRadius: '5px',
-                  border: '1px solid #ccc',
-                  backgroundColor: 'white',
-                }}
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  margin: '10px 0',
-                  borderRadius: '5px',
-                  border: '1px solid #ccc',
-                  backgroundColor: 'white',
-                }}
-                required
-              />
-              <button type="submit" style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-                fontSize: '16px',
-              }}>
-                Login
-              </button>
-            </form>
-            <p style={{ marginTop: '20px', cursor: 'pointer', color: '#007bff' }} onClick={() => setIsResettingPassword(true)}>
-              Forgot Password?
-            </p>
-          </>
-        )}
-      </div>
-    </div>
+    <div className="flex justify-center items-center h-screen bg-white">
+  <div className="p-10 rounded-lg shadow-lg text-center w-96">
+    {isResettingPassword ? (
+      // Password Reset Form
+      <>
+        <h2 className="mb-5 text-4xl text-blue-500 font-bold">Reset Password</h2>
+        <form onSubmit={handlePasswordReset}>
+          <input
+            type="email"
+            placeholder="Enter your email"
+            value={resetEmail}
+            onChange={(e) => setResetEmail(e.target.value)}
+            className="w-full p-3 mb-3 rounded border border-gray-300 bg-white"
+            required
+          />
+          <button
+            type="submit"
+            className="w-full p-3 bg-blue-500 text-white border-none rounded cursor-pointer text-lg"
+          >
+            Send Reset Email
+          </button>
+        </form>
+        <p
+          className="mt-5 cursor-pointer text-blue-500"
+          onClick={() => setIsResettingPassword(false)}
+        >
+          Back to Login
+        </p>
+      </>
+    ) : (
+      // Login Form
+      <>
+        <h2 className="mb-5 text-4xl text-blue-500 font-bold">Login</h2>
+        <form onSubmit={handleLogin}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-3 mb-3 rounded border border-gray-300 bg-white"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-3 mb-3 rounded border border-gray-300 bg-white"
+            required
+          />
+          <button
+            type="submit"
+            className="w-full p-3 bg-blue-500 text-white border-none rounded cursor-pointer text-lg"
+          >
+            Login
+          </button>
+        </form>
+        <p
+          className="mt-5 cursor-pointer text-blue-500"
+          onClick={() => setIsResettingPassword(true)}
+        >
+          Forgot Password?
+        </p>
+      </>
+    )}
+  </div>
+</div>
+
   );
 };
 

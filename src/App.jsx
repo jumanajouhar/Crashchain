@@ -20,7 +20,6 @@ export default function App() {
           <>
             <Hero />
             <ContentSection />
-            <PricingView />
           </>
         } />
         {/* Define the route for the login page */}

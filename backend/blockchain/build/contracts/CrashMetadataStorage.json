@@ -38,7 +38,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [
@@ -102,7 +103,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [],
@@ -115,7 +117,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.0+commit.c7dfd78e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getMetadata\",\"outputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"dataId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"vin\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"location\",\"type\":\"string\"}],\"internalType\":\"struct CrashMetadataStorage.CrashMetadata\",\"name\":\"\",\"type\":\"tuple\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTotalMetadataCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"metadataArray\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"dataId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"vin\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"timestamp\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"location\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"_dataId\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_vin\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"_location\",\"type\":\"string\"}],\"name\":\"storeMetadata\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/CrashMetadataStorage.sol\":\"CrashMetadataStorage\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"project:/contracts/CrashMetadataStorage.sol\":{\"keccak256\":\"0xa8dd2100c2e15d72f2db9e672721398ef8034ae403baf9835677eb3d8931a4f6\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://bd3be35439b26275214fca1ef966f2ceb7c558b8968b22da2df4183abc5a3dd1\",\"dweb:/ipfs/Qme5rAR68g28obTwAgyvgo84WDHpsxyP6vPaYTcvMwXbWB\"]}},\"version\":1}",
@@ -6587,12 +6590,13 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x68d8E2C6159BEAF45A573a4B50d9c3740A9Ff371",
-      "transactionHash": "0x0f9918a8d91bca1b6980547f47f4ca3a9bc6715b644df6d4def960716c41b24b"
+      "address": "0x8597Fcd091C68A55B5480eEEa61e7256cC04E97e",
+      "transactionHash": "0x4179e47ccad33a88669c97ea4862854999797290a112bc482eeadc8467c7d068"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-11-11T18:26:05.764Z",
+  "updatedAt": "2024-11-12T16:15:26.128Z",
+  "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
     "methods": {},

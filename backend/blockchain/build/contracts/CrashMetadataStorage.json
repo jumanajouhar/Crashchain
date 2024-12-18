@@ -6590,12 +6590,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x8597Fcd091C68A55B5480eEEa61e7256cC04E97e",
-      "transactionHash": "0x4179e47ccad33a88669c97ea4862854999797290a112bc482eeadc8467c7d068"
+      "address": "0xc2b6a86f4de35d2708feAdB0Ebe7B38e30e3F267",
+      "transactionHash": "0x9aef25d9e25ad73da417c7f3bc459136fa359a0e22aa9f5b97aa29dae6d29ed1"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-11-12T16:15:26.128Z",
+  "updatedAt": "2024-11-13T07:21:19.422Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

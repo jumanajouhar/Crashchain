@@ -9,6 +9,7 @@ import ContentSection from './components/contentsection';
 import Hero from './components/hero';
 import Footer from './components/footer';
 import PricingView from './components/Pricing/pricingview';
+import FileUpload from './pages/upload';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/dashboard" element={<DashBoard />} />
         {/* Add the new route for the ReportPage */}
         <Route path="/report" element={<ReportPage />} />
+        <Route path="/upload" element={<FileUpload />} />
       </Routes>
       <Footer />
     </Router>

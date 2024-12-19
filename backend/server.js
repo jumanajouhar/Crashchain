@@ -3,6 +3,41 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const {Web3} = require('web3');
 const mongoose = require('mongoose');
+const cors = require('cors');
+const multer = require('multer');
+const { PinataSDK } = require('pinata-web3');
+const app = express(); // Initialize 'app' here
+
+app.use(cors());
+
+// Pinata SDK initialization
+const pinata = new PinataSDK({
+  pinataJwt: process.env.PINATA_JWT, // Ensure this environment variable is set
+  pinataGateway: 'lavender-tropical-harrier-912.mypinata.cloud', // Replace with your Pinata Gateway URL
+});
+
+// Multer setup for file upload handling
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Define routes after initializing the app
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  try {
+    const file = new File([req.file.buffer], req.file.originalname, { type: req.file.mimetype });
+    const uploadResult = await pinata.upload.file(file);
+
+    res.json({
+      IpfsHash: uploadResult.IpfsHash,
+      PinSize: uploadResult.PinSize,
+    });
+  } catch (error) {
+    console.error('Error uploading file to Pinata:', error);
+    res.status(500).json({ error: 'Error uploading file to Pinata' });
+  }
+});
 
 // MongoDB connection
 const connectDB = async () => {
@@ -31,7 +66,6 @@ const obdDataSchema = new mongoose.Schema({
 const OBDData = mongoose.model('OBDData', obdDataSchema);
 
 // Express setup
-const app = express();
 const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 

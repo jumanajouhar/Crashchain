@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import Chart from 'chart.js/auto';
 
 const ReportPage = () => {
@@ -11,7 +10,6 @@ const ReportPage = () => {
   const fuelChartRef = useRef(null);
 
   useEffect(() => {
-    // Chart initialization helper
     const createChart = (ref, id, data, label, borderColor) => {
       if (ref.current) ref.current.destroy();
       const ctx = document.getElementById(id).getContext('2d');
@@ -38,50 +36,142 @@ const ReportPage = () => {
       });
     };
 
-    // Initialize each chart
-    createChart(speedChartRef, 'speedChart', [0, 20, 50, 80, 70, 0], 'Speed (km/h)', 'rgba(75, 192, 192, 1)');
-    createChart(rpmChartRef, 'rpmChart', [500, 1500, 2000, 3000, 2500, 0], 'Engine RPM', 'rgba(255, 99, 132, 1)');
-    createChart(throttleChartRef, 'throttleChart', [10, 30, 50, 70, 40, 20], 'Throttle Position (%)', 'rgba(255, 206, 86, 1)');
-    createChart(brakeChartRef, 'brakeChart', [100, 80, 60, 30, 40, 90], 'Brake Pressure (PSI)', 'rgba(54, 162, 235, 1)');
-    createChart(fuelChartRef, 'fuelChart', [300, 320, 340, 360, 330, 310], 'Fuel Pressure (kPa)', 'rgba(153, 102, 255, 1)');
+    createChart(speedChartRef, 'speedChart', [0, 20, 50, 80, 70, 0], 'Speed (km/h)', 'rgb(75, 192, 192)');
+    createChart(rpmChartRef, 'rpmChart', [500, 1500, 2000, 3000, 2500, 0], 'Engine RPM', 'rgb(255, 99, 132)');
+    createChart(throttleChartRef, 'throttleChart', [10, 30, 50, 70, 40, 20], 'Throttle Position (%)', 'rgb(255, 206, 86)');
+    createChart(brakeChartRef, 'brakeChart', [100, 80, 60, 30, 40, 90], 'Brake Pressure (PSI)', 'rgb(54, 162, 235)');
+    createChart(fuelChartRef, 'fuelChart', [300, 320, 340, 360, 330, 310], 'Fuel Pressure (kPa)', 'rgb(153, 102, 255)');
 
-    // Cleanup charts on component unmount
     return () => {
-      if (speedChartRef.current) speedChartRef.current.destroy();
-      if (rpmChartRef.current) rpmChartRef.current.destroy();
-      if (throttleChartRef.current) throttleChartRef.current.destroy();
-      if (brakeChartRef.current) brakeChartRef.current.destroy();
-      if (fuelChartRef.current) fuelChartRef.current.destroy();
+      [speedChartRef, rpmChartRef, throttleChartRef, brakeChartRef, fuelChartRef].forEach(ref => {
+        if (ref.current) ref.current.destroy();
+      });
     };
   }, []);
 
-  // Function to generate PDF
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    doc.text(20, 20, 'Crash Report');
-    // Add more text as needed
+  const addChartToPdf = async (doc, chartId, title, yPosition) => {
+    const chart = document.getElementById(chartId);
+    if (!chart) return yPosition;
 
-    const charts = ['speedChart', 'rpmChart', 'throttleChart', 'brakeChart', 'fuelChart'];
-    let yOffset = 30;
+    // Create a clean canvas copy
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = chart.width;
+    tempCanvas.height = chart.height;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.fillStyle = '#ffffff';
+    tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    tempCtx.drawImage(chart, 0, 0);
 
-    charts.forEach((chartId, index) => {
-      html2canvas(document.querySelector(`#${chartId}`)).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        doc.addImage(imgData, 'PNG', 10, yOffset, 190, 60); // Adjust chart size in PDF
-        yOffset += 70;
+    // Add title
+    doc.setFontSize(12);
+    doc.text(title, 20, yPosition - 5);
 
-        if (index === charts.length - 1) {
-          doc.save('crash_report.pdf');
-        }
+    // Add chart
+    doc.addImage(
+      tempCanvas.toDataURL('image/png'),
+      'PNG',
+      20,
+      yPosition,
+      170,
+      50
+    );
+
+    return yPosition + 60;
+  };
+
+  const generatePDF = async () => {
+    try {
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(24);
+      doc.text('Full Crash Report', 105, 20, { align: 'center' });
+      
+      // Add timestamp
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${new Date().toLocaleString()}`, 20, 30);
+      
+      // Vehicle Details Section
+      doc.setFontSize(16);
+      doc.text('Vehicle Details', 20, 45);
+      
+      doc.setFontSize(12);
+      const vehicleDetails = [
+        'VIN Number: 1HGBH41JXMN109186',
+        'ECU Identifier: ABC12345',
+        'Distance Traveled: 150 km'
+      ];
+      vehicleDetails.forEach((detail, index) => {
+        doc.text(detail, 30, 55 + (index * 7));
       });
-    });
+      
+      // Crash Event Details Section
+      doc.setFontSize(16);
+      doc.text('Crash Event Details', 20, 85);
+      
+      doc.setFontSize(12);
+      const crashDetails = [
+        'Date: 2024-10-10',
+        'Time: 14:30',
+        'Location: 45.4215 N, 75.6972 W',
+        'Impact Severity: High'
+      ];
+      crashDetails.forEach((detail, index) => {
+        doc.text(detail, 30, 95 + (index * 7));
+      });
+      
+      // Add charts
+      doc.addPage();
+      doc.setFontSize(16);
+      doc.text('Vehicle Dynamics Data', 20, 20);
+      
+      let currentY = 30;
+      
+      // Add each chart
+      currentY = await addChartToPdf(doc, 'speedChart', 'Vehicle Speed Over Time', currentY);
+      currentY = await addChartToPdf(doc, 'rpmChart', 'Engine RPM Over Time', currentY);
+      
+      // Add new page for remaining charts
+      doc.addPage();
+      currentY = 30;
+      
+      currentY = await addChartToPdf(doc, 'throttleChart', 'Throttle Position Over Time', currentY);
+      currentY = await addChartToPdf(doc, 'brakeChart', 'Brake Pressure Over Time', currentY);
+      currentY = await addChartToPdf(doc, 'fuelChart', 'Fuel Pressure Over Time', currentY);
+      
+      // Add summary page
+      doc.addPage();
+      doc.setFontSize(16);
+      doc.text('Analysis Summary', 20, 20);
+      
+      doc.setFontSize(12);
+      const summary = [
+        'Maximum Speed: 80 km/h',
+        'Maximum RPM: 3000',
+        'Average Throttle Position: 36.7%',
+        'Impact Analysis:',
+        '- Rapid deceleration observed in final second',
+        '- High brake pressure application detected',
+        '- Engine RPM shows emergency shutdown pattern',
+        '- All systems showed normal operation until impact'
+      ];
+      
+      summary.forEach((line, index) => {
+        doc.text(line, 30, 35 + (index * 10));
+      });
+      
+      doc.save('crash_report.pdf');
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    }
   };
 
   return (
     <div className="max-w-5xl mx-auto p-6 bg-white shadow-lg rounded-lg">
       <h2 className="text-2xl font-bold text-center mb-6">Full Crash Report</h2>
 
-      {/* Vehicle Details */}
       <div className="mb-8">
         <h3 className="text-xl font-semibold mb-4">Vehicle Details</h3>
         <ul className="list-none p-0 space-y-2">
@@ -91,7 +181,6 @@ const ReportPage = () => {
         </ul>
       </div>
 
-      {/* Crash Event Details */}
       <div className="mb-8">
         <h3 className="text-xl font-semibold mb-4">Crash Event Details</h3>
         <ul className="list-none p-0 space-y-2">
@@ -102,7 +191,6 @@ const ReportPage = () => {
         </ul>
       </div>
 
-      {/* Vehicle Dynamics */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <div className="relative h-64">
           <canvas id="speedChart"></canvas>
@@ -123,7 +211,15 @@ const ReportPage = () => {
 
       <button
         onClick={generatePDF}
-        className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg"
+        style={{ 
+          width: '100%',
+          backgroundColor: '#22c55e',
+          color: 'white',
+          padding: '0.75rem',
+          borderRadius: '0.5rem',
+          fontWeight: 'bold',
+          cursor: 'pointer'
+        }}
       >
         Download PDF Report
       </button>

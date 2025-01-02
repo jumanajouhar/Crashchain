@@ -10,6 +10,7 @@ import Hero from './components/hero';
 import Footer from './components/footer';
 import PricingView from './components/Pricing/pricingview';
 import FileUpload from './pages/upload';
+import HardwareSimulator from './pages/Hardsim';
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
         {/* Add the new route for the ReportPage */}
         <Route path="/report" element={<ReportPage />} />
         <Route path="/upload" element={<FileUpload />} />
+        <Route path="/hardsim" element={<HardwareSimulator />} />
       </Routes>
       <Footer />
     </Router>

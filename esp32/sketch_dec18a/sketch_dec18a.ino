@@ -1,145 +1,105 @@
-#include <WiFi.h>
-#include <WiFiClient.h>
-#include "esp_camera.h"
+#include "BluetoothSerial.h"
 
-// Replace with your Wi-Fi credentials
-const char* ssid = "realme 8";
-const char* password = "12345678";
+// Initialize Bluetooth Serial
+BluetoothSerial SerialBT;
 
-// Backend URL
-const char* serverUrl = "192.168.248.91"; // IP only
-const int serverPort = 3000;
-const char* serverPath = "/api/upload"; // API endpoint
+// OBD-II Bluetooth device name (change to your scanner's name)
+const char* obdDeviceName = "OBDII";
 
-// Camera pin configuration for ESP32-CAM
-#define PWDN_GPIO_NUM  32
-#define RESET_GPIO_NUM -1
-#define XCLK_GPIO_NUM  0
-#define SIOD_GPIO_NUM  26
-#define SIOC_GPIO_NUM  27
-
-#define Y9_GPIO_NUM    35
-#define Y8_GPIO_NUM    34
-#define Y7_GPIO_NUM    39
-#define Y6_GPIO_NUM    36
-#define Y5_GPIO_NUM    21
-#define Y4_GPIO_NUM    19
-#define Y3_GPIO_NUM    18
-#define Y2_GPIO_NUM    5
-#define VSYNC_GPIO_NUM 25
-#define HREF_GPIO_NUM  23
-#define PCLK_GPIO_NUM  22
+// Define a buffer for incoming data
+char responseBuffer[128];
+int bufferIndex = 0;
 
 void setup() {
   Serial.begin(115200);
+  Serial.println("Starting Bluetooth...");
 
-  // Connect to Wi-Fi
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to Wi-Fi");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  // Initialize Bluetooth Serial
+  if (!SerialBT.begin("ESP32-OBD")) {
+    Serial.println("Bluetooth initialization failed!");
+    while (1);
   }
-  Serial.println("\nWi-Fi connected");
+  Serial.println("Bluetooth initialized");
 
-  // Initialize the camera
-  camera_config_t config;
-  config.ledc_channel = LEDC_CHANNEL_0;
-  config.ledc_timer = LEDC_TIMER_0;
-  config.pin_d0 = Y2_GPIO_NUM;
-  config.pin_d1 = Y3_GPIO_NUM;
-  config.pin_d2 = Y4_GPIO_NUM;
-  config.pin_d3 = Y5_GPIO_NUM;
-  config.pin_d4 = Y6_GPIO_NUM;
-  config.pin_d5 = Y7_GPIO_NUM;
-  config.pin_d6 = Y8_GPIO_NUM;
-  config.pin_d7 = Y9_GPIO_NUM;
-  config.pin_xclk = XCLK_GPIO_NUM;
-  config.pin_pclk = PCLK_GPIO_NUM;
-  config.pin_vsync = VSYNC_GPIO_NUM;
-  config.pin_href = HREF_GPIO_NUM;
-  config.pin_sscb_sda = SIOD_GPIO_NUM;
-  config.pin_sscb_scl = SIOC_GPIO_NUM;
-  config.pin_pwdn = PWDN_GPIO_NUM;
-  config.pin_reset = RESET_GPIO_NUM;
-  config.xclk_freq_hz = 20000000;
-  config.pixel_format = PIXFORMAT_JPEG;
-
-  // Check PSRAM and set camera configurations
-  if (psramFound()) {
-    Serial.println("PSRAM found. Using high-quality settings.");
-    config.frame_size = FRAMESIZE_UXGA;
-    config.jpeg_quality = 10;
-    config.fb_count = 2;
+  // Attempt to connect to the OBD-II device
+  Serial.printf("Connecting to %s...\n", obdDeviceName);
+  if (SerialBT.connect(obdDeviceName)) {
+    Serial.println("Connected to OBD-II scanner!");
   } else {
-    Serial.println("PSRAM not found. Using low-quality settings.");
-    config.frame_size = FRAMESIZE_SVGA;
-    config.jpeg_quality = 12;
-    config.fb_count = 1;
+    Serial.println("Failed to connect to OBD-II scanner. Restart and try again.");
+    while (1);
   }
 
-  esp_err_t err = esp_camera_init(&config);
-  if (err != ESP_OK) {
-    Serial.printf("Camera init failed with error 0x%x\n", err);
-    return;
-  }
-
-  Serial.println("Camera initialized successfully");
+  // Send initialization commands to OBD-II scanner
+  initializeOBD();
 }
 
 void loop() {
-  Serial.println("Attempting to capture an image...");
+  // Example: Request vehicle speed (PID 010D)
+  sendOBDCommand("010D");
+  delay(1000); // Allow time for response
 
-  // Capture a frame
-  camera_fb_t *fb = esp_camera_fb_get();
-  if (!fb) {
-    Serial.println("Camera capture failed. Retrying in 10 seconds.");
-    delay(10000);
-    return;
+  // Parse the response
+  String speed = parseOBDResponse();
+  if (!speed.isEmpty()) {
+    Serial.printf("Vehicle Speed: %s km/h\n", speed.c_str());
+  } else {
+    Serial.println("Failed to retrieve vehicle speed");
   }
 
-  WiFiClient client;
+  delay(2000); // Wait before next command
+}
 
-  if (!client.connect(serverUrl, serverPort)) {
-    Serial.println("Connection to server failed.");
-    esp_camera_fb_return(fb);
-    delay(10000);
-    return;
-  }
+// Function to send a command to the OBD-II scanner
+void sendOBDCommand(const char* command) {
+  String cmd = String(command) + "\r"; // Append \r for command termination
+  SerialBT.print(cmd);
+  Serial.printf("Sent command: %s\n", command);
+}
 
-  // Construct the multipart request
-  String boundary = "----ESP32Boundary";
-  String bodyStart = "--" + boundary + "\r\n";
-  bodyStart += "Content-Disposition: form-data; name=\"image\"; filename=\"capture.jpg\"\r\n";
-  bodyStart += "Content-Type: image/jpeg\r\n\r\n";
+// Function to parse the OBD-II response
+String parseOBDResponse() {
+  memset(responseBuffer, 0, sizeof(responseBuffer)); // Clear buffer
+  bufferIndex = 0;
 
-  String bodyEnd = "\r\n--" + boundary + "--\r\n";
-
-  // Send HTTP request headers
-  client.printf("POST %s HTTP/1.1\r\n", serverPath);
-  client.printf("Host: %s:%d\r\n", serverUrl, serverPort);
-  client.printf("Content-Type: multipart/form-data; boundary=%s\r\n", boundary.c_str());
-  client.printf("Content-Length: %d\r\n\r\n", bodyStart.length() + fb->len + bodyEnd.length());
-
-  // Send HTTP request body
-  client.print(bodyStart);       // Start boundary and headers
-  client.write(fb->buf, fb->len); // Image binary data
-  client.print(bodyEnd);         // End boundary
-
-  // Wait for the response
-  while (client.connected() || client.available()) {
-    if (client.available()) {
-      String line = client.readStringUntil('\n');
-      Serial.println(line);
+  unsigned long startTime = millis();
+  while (millis() - startTime < 2000) { // Wait for 2 seconds for a response
+    while (SerialBT.available()) {
+      char c = SerialBT.read();
+      if (c == '>') { // End of response
+        responseBuffer[bufferIndex] = '\0';
+        return extractDataFromResponse(responseBuffer);
+      } else if (bufferIndex < sizeof(responseBuffer) - 1) {
+        responseBuffer[bufferIndex++] = c;
+      }
     }
   }
+  return ""; // Timeout or no response
+}
 
-  client.stop();
+// Function to extract data from the OBD-II response
+String extractDataFromResponse(const char* response) {
+  String resp = String(response);
+  Serial.printf("Raw OBD Response: %s\n", resp.c_str());
 
-  // Return the frame buffer
-  esp_camera_fb_return(fb);
+  // Basic parsing: Find the data portion
+  int startIdx = resp.indexOf("41 ");
+  if (startIdx != -1) {
+    String data = resp.substring(startIdx + 3);
+    data.trim();
+    return String(strtol(data.c_str(), NULL, 16)); // Convert hex to decimal
+  }
+  return ""; // Parsing failed
+}
 
-  // Delay before the next capture
-  Serial.println("Capture completed. Waiting 10 seconds before next attempt.");
-  delay(10000);
+// Function to initialize OBD-II scanner
+void initializeOBD() {
+  // Set OBD-II protocol to automatic
+  sendOBDCommand("ATZ"); // Reset OBD-II
+  delay(1000);
+  sendOBDCommand("ATE0"); // Disable echo
+  delay(1000);
+  sendOBDCommand("ATSP0"); // Set protocol to auto
+  delay(1000);
+  Serial.println("OBD-II initialization complete");
 }

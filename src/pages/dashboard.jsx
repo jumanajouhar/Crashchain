@@ -15,11 +15,11 @@ const Dashboard = () => {
           console.error("API Response:", {
             status: response.status,
             statusText: response.statusText,
-            body: errorText
+            body: errorText,
           });
           throw new Error(`Server responded with ${response.status}`);
         }
-        
+
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
           throw new Error("Server did not return JSON data");
@@ -27,7 +27,7 @@ const Dashboard = () => {
 
         const data = await response.json();
         console.log("Dashboard data received:", data);
-        
+
         setDashboardData(Array.isArray(data) ? data : []);
         setLoading(false);
       } catch (err) {
@@ -42,11 +42,11 @@ const Dashboard = () => {
 
   const getFileIcon = (mimeType) => {
     if (mimeType?.startsWith("image/")) {
-      return <Image className="w-6 h-6" />;
+      return <Image className="w-6 h-6 text-blue-500" />;
     } else if (mimeType?.includes("pdf")) {
-      return <FileText className="w-6 h-6" />;
+      return <FileText className="w-6 h-6 text-red-500" />;
     }
-    return <File className="w-6 h-6" />;
+    return <File className="w-6 h-6 text-gray-500" />;
   };
 
   const formatFileSize = (size) => {
@@ -54,19 +54,22 @@ const Dashboard = () => {
     const units = ["B", "KB", "MB", "GB"];
     let formattedSize = size;
     let unitIndex = 0;
-    
+
     while (formattedSize >= 1024 && unitIndex < units.length - 1) {
       formattedSize /= 1024;
       unitIndex++;
     }
-    
+
     return `${formattedSize.toFixed(2)} ${units[unitIndex]}`;
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading dashboard data...</div>
+        <div className="flex flex-col items-center">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-lg mt-4">Loading dashboard data...</div>
+        </div>
       </div>
     );
   }
@@ -74,8 +77,8 @@ const Dashboard = () => {
   if (error) {
     return (
       <div className="p-4">
-        <div className="bg-red-50 rounded-lg p-6">
-          <div className="text-red-600">
+        <div className="bg-red-100 border-l-4 border-red-500 rounded-lg p-6">
+          <div className="text-red-700">
             <h2 className="text-lg font-semibold mb-2">Error loading dashboard</h2>
             <p>{error}</p>
             <div className="mt-4 text-sm">
@@ -94,18 +97,21 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-4 space-y-6">
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-      
+    <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+
       {(!dashboardData || dashboardData.length === 0) ? (
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-gray-500">No data available. Try uploading some files first.</p>
         </div>
       ) : (
         dashboardData.map((group) => (
-          <div key={group.groupId} className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="border-b border-gray-200 p-6">
-              <h2 className="text-xl font-semibold">{group.groupName}</h2>
+          <div
+            key={group.groupId}
+            className="bg-white rounded-lg shadow overflow-hidden border border-gray-200"
+          >
+            <div className="border-b bg-gray-100 p-6">
+              <h2 className="text-xl font-semibold text-gray-700">{group.groupName}</h2>
             </div>
             <div className="p-6">
               <div className="space-y-4">
@@ -115,11 +121,13 @@ const Dashboard = () => {
                       key={file.cid}
                       className="flex items-center p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <div className="mr-4 text-gray-500">
+                      <div className="mr-4">
                         {getFileIcon(file.mimeType)}
                       </div>
                       <div className="flex-grow">
-                        <h3 className="font-medium">{file.name || "Unnamed File"}</h3>
+                        <h3 className="font-medium text-gray-800">
+                          {file.name || "Unnamed File"}
+                        </h3>
                         <div className="text-sm text-gray-500 mt-1">
                           <span className="mr-4">CID: {file.cid}</span>
                           <span>{formatFileSize(file.size)}</span>
@@ -129,7 +137,7 @@ const Dashboard = () => {
                         href={`https://lavender-tropical-harrier-912.mypinata.cloud/ipfs/${file.cid}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-4 py-2 text-sm text-blue-600 hover:text-blue-800"
+                        className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
                       >
                         View File
                       </a>

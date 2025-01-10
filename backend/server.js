@@ -73,25 +73,79 @@ const fetchAllGroupsAndFiles = async () => {
       return [];
     }
 
+    // Fetch total metadata count from blockchain with error handling
+    let totalMetadata = 0;
+    try {
+      totalMetadata = await crashContract.methods.getTotalMetadataCount().call();
+      console.log(`[DEBUG] Total metadata count from blockchain: ${totalMetadata}`);
+    } catch (error) {
+      console.error('[DEBUG] Error fetching total metadata count:', error);
+      return groups.map(group => ({ 
+        groupId: group.id, 
+        groupName: group.name, 
+        files: [], 
+        blockchainData: [] 
+      }));
+    }
+
+    // Fetch all metadata from blockchain
+    const blockchainMetadata = [];
+    for (let i = 0; i < totalMetadata; i++) {
+      try {
+        const metadata = await crashContract.methods.getMetadata(i).call();
+        if (metadata) {
+          blockchainMetadata.push({
+            index: i,
+            dataId: metadata[0], // Access by index since we're getting a tuple
+            vin: metadata[1],
+            timestamp: metadata[2],
+            location: metadata[3],
+            cids: metadata[4]
+          });
+          console.log(`[DEBUG] Successfully fetched metadata at index ${i}:`, metadata);
+        }
+      } catch (error) {
+        console.error(`[DEBUG] Error fetching metadata at index ${i}:`, error);
+      }
+    }
+
     const groupData = await Promise.all(
       groups.map(async (group) => {
-        console.log(`[DEBUG] Fetching files for group ID: ${group.id}`);
-        const filesResponse = await pinata.listFiles().group(group.id);
+        try {
+          console.log(`[DEBUG] Fetching files for group ID: ${group.id}`);
+          const filesResponse = await pinata.listFiles().group(group.id);
 
-        if (!filesResponse || !Array.isArray(filesResponse)) {
-          console.error(`[DEBUG] Invalid files structure for group ID ${group.id}:`, filesResponse);
-          return { groupId: group.id, groupName: group.name, files: [] };
+          if (!filesResponse || !Array.isArray(filesResponse)) {
+            console.error(`[DEBUG] Invalid files structure for group ID ${group.id}:`, filesResponse);
+            return { groupId: group.id, groupName: group.name, files: [], blockchainData: [] };
+          }
+          
+          const files = filesResponse.map((file) => ({
+            cid: file.ipfs_pin_hash,
+            name: file.metadata?.name || 'Unknown',
+            mimeType: file.mime_type,
+            size: file.size,
+          }));
+
+          // Find matching blockchain metadata for this group's files
+          const matchingMetadata = blockchainMetadata.filter(metadata => 
+            metadata.cids && Array.isArray(metadata.cids) && 
+            metadata.cids.some(cid => files.some(file => file.cid === cid))
+          );
+          
+          console.log(`[DEBUG] Valid files processed for group ID ${group.id}:`, files);
+          console.log(`[DEBUG] Matching blockchain metadata:`, matchingMetadata);
+          
+          return { 
+            groupId: group.id, 
+            groupName: group.name, 
+            files,
+            blockchainData: matchingMetadata
+          };
+        } catch (error) {
+          console.error(`[DEBUG] Error processing group ${group.id}:`, error);
+          return { groupId: group.id, groupName: group.name, files: [], blockchainData: [] };
         }
-        
-        const files = filesResponse.map((file) => ({
-          cid: file.ipfs_pin_hash,
-          name: file.metadata?.name || 'Unknown',
-          mimeType: file.mime_type,
-          size: file.size,
-        }));
-        
-        console.log(`[DEBUG] Valid files processed for group ID ${group.id}:`, files);
-        return { groupId: group.id, groupName: group.name, files };
       })
     );
 
@@ -102,6 +156,7 @@ const fetchAllGroupsAndFiles = async () => {
     return [];
   }
 };
+
 // Global variable to store dashboard data
 let dashboardData = [];
 
@@ -152,40 +207,63 @@ app.post('/api/upload-and-process', upload.single('file'), async (req, res) => {
       );
 
       imageIpfsHash = imageUploadResponse.data.IpfsHash;
-      console.log(`[DEBUG] Image uploaded: ${imageIpfsHash}`);
+      console.log(`[DEBUG] File uploaded to IPFS with hash: ${imageIpfsHash}`);
       groupCids.push(imageIpfsHash);
     }
 
-    // Generate and save PDF
-    console.log('[DEBUG] Generating PDF');
+    // Generate and upload PDF
     const pdfPath = path.join(uploadsDir, `report-${Date.now()}.pdf`);
     await generatePDF(req.body, pdfPath);
 
-    const formData = new FormData();
-    formData.append('file', fs.createReadStream(pdfPath));
+    const pdfFormData = new FormData();
+    pdfFormData.append('file', fs.createReadStream(pdfPath));
 
     const pdfUploadResponse = await axios.post(
       'https://api.pinata.cloud/pinning/pinFileToIPFS',
-      formData,
+      pdfFormData,
       {
         headers: {
           Authorization: `Bearer ${process.env.PINATA_JWT}`,
-          ...formData.getHeaders(),
+          ...pdfFormData.getHeaders(),
         },
         maxBodyLength: Infinity,
       }
     );
 
-    groupCids.push(pdfUploadResponse.data.IpfsHash);
-    console.log(`[DEBUG] PDF uploaded: ${pdfUploadResponse.data.IpfsHash}`);
+    const pdfIpfsHash = pdfUploadResponse.data.IpfsHash;
+    console.log(`[DEBUG] PDF uploaded to IPFS with hash: ${pdfIpfsHash}`);
+    groupCids.push(pdfIpfsHash);
+
+    // Clean up the PDF file
+    fs.unlinkSync(pdfPath);
 
     // Add CIDs to the Pinata group
-    console.log('[DEBUG] Adding CIDs to group');
+    console.log(`[DEBUG] Adding CIDs to group: ${groupCids.join(', ')}`);
     const addCidsResponse = await pinata.groups.addCids({
-      groupId: group.id,
       cids: groupCids,
+      groupId: group.id,
     });
     console.log(`[DEBUG] CIDs added to group: ${JSON.stringify(addCidsResponse)}`);
+
+    // Store metadata in blockchain
+    try {
+      console.log('[DEBUG] Storing metadata in blockchain');
+      const dataId = new mongoose.Types.ObjectId().toString(); // Generate a unique ID
+      const transaction = await crashContract.methods.storeMetadata(
+        dataId,
+        req.body.vinNumber || '',
+        req.body.location,
+        groupCids
+      ).send({
+        from: defaultAccount,
+        gas: 500000
+      });
+      
+      console.log('[DEBUG] Blockchain transaction successful:', transaction.transactionHash);
+    } catch (error) {
+      console.error('[DEBUG] Error storing metadata in blockchain:', error);
+      // Continue with the response even if blockchain storage fails
+    }
 
     await broadcastUpdate();
 
@@ -193,12 +271,14 @@ app.post('/api/upload-and-process', upload.single('file'), async (req, res) => {
       message: 'Upload successful',
       groupName: group.name,
       groupId: group.id,
-      cids: groupCids,
-      addCidsResponse,
+      files: groupCids.map(cid => ({
+        cid,
+        url: `https://${process.env.GATEWAY_URL}/ipfs/${cid}`
+      }))
     });
   } catch (error) {
-    console.error('[DEBUG] Error in upload-and-process:', error);
-    res.status(500).json({ error: error.message });
+    console.error('[DEBUG] Upload error:', error);
+    res.status(500).json({ error: 'Error processing upload' });
   }
 });
 
@@ -289,9 +369,85 @@ app.use(bodyParser.json());
 
 // Web3 setup
 const web3 = new Web3(process.env.ETH_PROVIDER);
-const contractABI = require('./blockchain/build/contracts/CrashMetadataStorage.json').abi;
+let contractABI;
+try {
+  contractABI = require('./blockchain/build/contracts/CrashMetadataStorage.json').abi;
+  console.log('[DEBUG] Successfully loaded contract ABI');
+} catch (error) {
+  console.error('[DEBUG] Error loading contract ABI:', error);
+  process.exit(1);
+}
+
 const contractAddress = process.env.CONTRACT_ADDRESS;
+console.log('[DEBUG] Using contract address:', contractAddress);
+console.log('[DEBUG] Using ETH provider:', process.env.ETH_PROVIDER);
+
+// Test Ganache connection first
+web3.eth.net.isListening()
+  .then(async () => {
+    console.log('[DEBUG] Successfully connected to Ganache');
+    
+    try {
+      const networkId = await web3.eth.net.getId();
+      console.log('[DEBUG] Connected to network ID:', networkId);
+      
+      const accounts = await web3.eth.getAccounts();
+      console.log('[DEBUG] Available accounts:', accounts);
+      
+      const balance = await web3.eth.getBalance(accounts[0]);
+      console.log('[DEBUG] First account balance:', web3.utils.fromWei(balance, 'ether'), 'ETH');
+      
+      // Check if contract exists
+      const code = await web3.eth.getCode(contractAddress);
+      if (code === '0x' || code === '0x0') {
+        console.error('[DEBUG] ⚠️ No contract found at address:', contractAddress);
+        console.error('[DEBUG] Please ensure the contract is deployed to Ganache and the address is correct');
+      } else {
+        console.log('[DEBUG] Contract code found at address:', contractAddress);
+        
+        // Try to call a view function
+        try {
+          const count = await crashContract.methods.getTotalMetadataCount().call();
+          console.log('[DEBUG] Total metadata count:', count.toString());
+        } catch (error) {
+          console.error('[DEBUG] Error calling getTotalMetadataCount:', error.message);
+        }
+      }
+    } catch (error) {
+      console.error('[DEBUG] Error during Ganache checks:', error);
+    }
+  })
+  .catch(err => {
+    console.error('[DEBUG] Failed to connect to Ganache:', err);
+    console.error('[DEBUG] Please ensure Ganache is running on', process.env.ETH_PROVIDER);
+  });
+
 const crashContract = new web3.eth.Contract(contractABI, contractAddress);
+
+// Get the default account for transactions
+let defaultAccount;
+web3.eth.getAccounts().then(accounts => {
+  defaultAccount = accounts[0];
+  console.log('[DEBUG] Default account set:', defaultAccount);
+}).catch(error => {
+  console.error('[DEBUG] Error getting accounts:', error);
+});
+
+// Test blockchain connection
+web3.eth.net.isListening()
+  .then(() => console.log('[DEBUG] Successfully connected to Ethereum network'))
+  .catch(err => console.error('[DEBUG] Error connecting to Ethereum network:', err));
+
+// Verify contract exists
+web3.eth.getCode(contractAddress)
+  .then(code => {
+    if (code === '0x') {
+      console.error('[DEBUG] No contract found at address:', contractAddress);
+    } else {
+      console.log('[DEBUG] Contract verified at address:', contractAddress);
+    }
+  })
+  .catch(err => console.error('[DEBUG] Error verifying contract:', err));
 
 // Endpoint to receive ESP32 OBD data
 app.post('/store-obd-data', async (req, res) => {
@@ -345,34 +501,73 @@ app.get('/verify-metadata/:index', async (req, res) => {
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+// Helper function to convert BigInt to string in objects
+const convertBigIntToString = (obj) => {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === 'bigint') return obj.toString();
+  if (Array.isArray(obj)) return obj.map(convertBigIntToString);
+  if (typeof obj === 'object') {
+    const converted = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        const value = obj[key];
+        converted[key] = convertBigIntToString(value);
+      }
+    }
+    return converted;
+  }
+  return obj;
+};
+
 // WebSocket connection handling
 wss.on('connection', (ws) => {
   console.log('[DEBUG] New WebSocket connection established');
-  
-  ws.isAlive = true;
-  
-  ws.on('pong', () => {
-    ws.isAlive = true;
-  });
-  
+
   // Send initial data
-  const sendInitialData = async () => {
-    try {
-      const data = await fetchAllGroupsAndFiles();
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ type: 'initialData', data }));
-      }
-    } catch (error) {
-      console.error('[DEBUG] Error sending initial data:', error);
-    }
-  };
-  
-  sendInitialData();
-  
+  sendInitialData(ws);
+
+  // Handle WebSocket errors
   ws.on('error', (error) => {
     console.error('[DEBUG] WebSocket error:', error);
   });
 });
+
+const sendInitialData = async (ws) => {
+  try {
+    const rawData = await fetchAllGroupsAndFiles();
+    const convertedData = convertBigIntToString(rawData);
+    const message = {
+      type: 'initialData',
+      data: convertedData
+    };
+    
+    console.log('[DEBUG] Sending initial data:', JSON.stringify(message, null, 2));
+    ws.send(JSON.stringify(message));
+  } catch (error) {
+    console.error('[DEBUG] Error sending initial data:', error);
+  }
+};
+
+// Broadcast updates to all connected clients
+const broadcastUpdate = async () => {
+  try {
+    const rawData = await fetchAllGroupsAndFiles();
+    const convertedData = convertBigIntToString(rawData);
+    const message = {
+      type: 'update',
+      data: convertedData
+    };
+    
+    console.log('[DEBUG] Broadcasting update:', JSON.stringify(message, null, 2));
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(message));
+      }
+    });
+  } catch (error) {
+    console.error('[DEBUG] Error broadcasting update:', error);
+  }
+};
 
 // Ping all clients every 30 seconds to keep connections alive
 const interval = setInterval(() => {
@@ -390,20 +585,6 @@ const interval = setInterval(() => {
 wss.on('close', () => {
   clearInterval(interval);
 });
-
-// Function to broadcast updates to all connected clients
-const broadcastUpdate = async () => {
-  try {
-    const data = await fetchAllGroupsAndFiles();
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify({ type: 'update', data }));
-      }
-    });
-  } catch (error) {
-    console.error('[DEBUG] Error broadcasting update:', error);
-  }
-};
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

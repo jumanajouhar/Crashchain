@@ -27,10 +27,19 @@ const Dashboard = () => {
       ws.current.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
+          console.log('Received WebSocket message:', message);
+          
           if (message.type === 'initialData' || message.type === 'update') {
-            console.log(`Received ${message.type}:`, message.data);
-            setDashboardData(message.data);
-            setLoading(false);
+            if (Array.isArray(message.data)) {
+              console.log('Setting dashboard data:', message.data);
+              setDashboardData(message.data);
+              setLoading(false);
+            } else {
+              console.error('Received data is not an array:', message.data);
+              setError('Invalid data format received from server');
+            }
+          } else {
+            console.warn('Unknown message type:', message.type);
           }
         } catch (err) {
           console.error('Error processing WebSocket message:', err);
@@ -159,6 +168,35 @@ const Dashboard = () => {
             </div>
             <div className="p-6">
               <div className="space-y-4">
+                {group.blockchainData.length > 0 && (
+                  <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                    <h3 className="text-lg font-medium text-blue-900 mb-2">Blockchain Data</h3>
+                    {group.blockchainData.map((metadata, index) => (
+                      <div key={index} className="mb-4 last:mb-0">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-blue-700">Block Index: {metadata.index}</p>
+                            <p className="text-blue-700">VIN: {metadata.vin || 'Not provided'}</p>
+                            <p className="text-blue-700">Location: {metadata.location}</p>
+                            <p className="text-blue-700">
+                              Timestamp: {new Date(metadata.timestamp * 1000).toLocaleString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-blue-700">Associated CIDs:</p>
+                            <ul className="list-disc pl-4">
+                              {metadata.cids.map((cid, cidIndex) => (
+                                <li key={cidIndex} className="text-blue-600 break-all">
+                                  {cid}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {group.files?.length > 0 ? (
                   group.files.map((file) => (
                     <div

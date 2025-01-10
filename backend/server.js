@@ -11,6 +11,8 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const FormData = require('form-data');
+const WebSocket = require('ws');
+const http = require('http');
 
 const app = express();
 app.use(cors());
@@ -185,6 +187,8 @@ app.post('/api/upload-and-process', upload.single('file'), async (req, res) => {
     });
     console.log(`[DEBUG] CIDs added to group: ${JSON.stringify(addCidsResponse)}`);
 
+    await broadcastUpdate();
+
     res.json({
       message: 'Upload successful',
       groupName: group.name,
@@ -269,7 +273,6 @@ connectDB().then(() => {
   initializeDashboard();
 });
 
-
 // Define MongoDB schema for OBD data
 const obdDataSchema = new mongoose.Schema({
   vin: String,
@@ -281,7 +284,7 @@ const obdDataSchema = new mongoose.Schema({
 const OBDData = mongoose.model('OBDData', obdDataSchema);
 
 // Express setup
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 // Web3 setup
@@ -339,6 +342,69 @@ app.get('/verify-metadata/:index', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`[DEBUG] Server running on port ${port}`);
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// WebSocket connection handling
+wss.on('connection', (ws) => {
+  console.log('[DEBUG] New WebSocket connection established');
+  
+  ws.isAlive = true;
+  
+  ws.on('pong', () => {
+    ws.isAlive = true;
+  });
+  
+  // Send initial data
+  const sendInitialData = async () => {
+    try {
+      const data = await fetchAllGroupsAndFiles();
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'initialData', data }));
+      }
+    } catch (error) {
+      console.error('[DEBUG] Error sending initial data:', error);
+    }
+  };
+  
+  sendInitialData();
+  
+  ws.on('error', (error) => {
+    console.error('[DEBUG] WebSocket error:', error);
+  });
+});
+
+// Ping all clients every 30 seconds to keep connections alive
+const interval = setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) {
+      console.log('[DEBUG] Terminating inactive WebSocket connection');
+      return ws.terminate();
+    }
+    
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
+
+wss.on('close', () => {
+  clearInterval(interval);
+});
+
+// Function to broadcast updates to all connected clients
+const broadcastUpdate = async () => {
+  try {
+    const data = await fetchAllGroupsAndFiles();
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ type: 'update', data }));
+      }
+    });
+  } catch (error) {
+    console.error('[DEBUG] Error broadcasting update:', error);
+  }
+};
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

@@ -8,7 +8,6 @@ import ReportPage from './pages/ReportPage';  // Import the ReportPage component
 import ContentSection from './components/contentsection';
 import Hero from './components/hero';
 import Footer from './components/footer';
-import PricingView from './components/Pricing/pricingview';
 import FileUpload from './pages/upload';
 import HardwareSimulator from './pages/Hardsim';
 

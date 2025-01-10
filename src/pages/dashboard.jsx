@@ -1,43 +1,77 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { FileText, Image, File } from "lucide-react";
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [wsStatus, setWsStatus] = useState('connecting');
+  const ws = useRef(null);
+  const reconnectTimeout = useRef(null);
+
+  const connectWebSocket = () => {
+    try {
+      ws.current = new WebSocket('ws://localhost:3000');
+
+      ws.current.onopen = () => {
+        console.log('WebSocket connection established');
+        setWsStatus('connected');
+        setError(null);
+        // Clear any existing reconnection timeout
+        if (reconnectTimeout.current) {
+          clearTimeout(reconnectTimeout.current);
+          reconnectTimeout.current = null;
+        }
+      };
+
+      ws.current.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'initialData' || message.type === 'update') {
+            console.log(`Received ${message.type}:`, message.data);
+            setDashboardData(message.data);
+            setLoading(false);
+          }
+        } catch (err) {
+          console.error('Error processing WebSocket message:', err);
+          setError('Failed to process server message');
+        }
+      };
+
+      ws.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setError('Failed to establish real-time connection');
+        setWsStatus('error');
+      };
+
+      ws.current.onclose = () => {
+        console.log('WebSocket connection closed');
+        setWsStatus('disconnected');
+        // Attempt to reconnect after 5 seconds
+        reconnectTimeout.current = setTimeout(() => {
+          console.log('Attempting to reconnect...');
+          connectWebSocket();
+        }, 5000);
+      };
+    } catch (err) {
+      console.error('Error creating WebSocket connection:', err);
+      setError('Failed to create WebSocket connection');
+      setWsStatus('error');
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:3000/api/dashboard-data");
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error("API Response:", {
-            status: response.status,
-            statusText: response.statusText,
-            body: errorText,
-          });
-          throw new Error(`Server responded with ${response.status}`);
-        }
+    connectWebSocket();
 
-        const contentType = response.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          throw new Error("Server did not return JSON data");
-        }
-
-        const data = await response.json();
-        console.log("Dashboard data received:", data);
-
-        setDashboardData(Array.isArray(data) ? data : []);
-        setLoading(false);
-      } catch (err) {
-        console.error("Detailed error:", err);
-        setError(`${err.message}. Please check the console for details.`);
-        setLoading(false);
+    // Cleanup on component unmount
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+      if (reconnectTimeout.current) {
+        clearTimeout(reconnectTimeout.current);
       }
     };
-
-    fetchData();
   }, []);
 
   const getFileIcon = (mimeType) => {
@@ -98,8 +132,18 @@ const Dashboard = () => {
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+        <div className={`px-3 py-1 rounded-full text-sm ${
+          wsStatus === 'connected' ? 'bg-green-100 text-green-800' :
+          wsStatus === 'connecting' ? 'bg-yellow-100 text-yellow-800' :
+          'bg-red-100 text-red-800'
+        }`}>
+          {wsStatus === 'connected' ? 'Live Updates Active' :
+           wsStatus === 'connecting' ? 'Connecting...' :
+           'Connection Lost'}
+        </div>
+      </div>
       {(!dashboardData || dashboardData.length === 0) ? (
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-gray-500">No data available. Try uploading some files first.</p>

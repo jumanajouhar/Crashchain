@@ -3,11 +3,13 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/header';
 import Login from './components/login';
 import SignUp from './components/signup';
-import DashBoard from './components/dashboard';
+import DashBoard from './pages/dashboard';
+import ReportPage from './pages/ReportPage';  // Import the ReportPage component
 import ContentSection from './components/contentsection';
 import Hero from './components/hero';
 import Footer from './components/footer';
-import PricingView from './components/Pricing/pricingview';
+import FileUpload from './pages/upload';
+import HardwareSimulator from './pages/Hardsim';
 
 export default function App() {
   return (
@@ -19,13 +21,16 @@ export default function App() {
           <>
             <Hero />
             <ContentSection />
-            <PricingView />
           </>
         } />
         {/* Define the route for the login page */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/dashboard" element={<DashBoard />} />
+        {/* Add the new route for the ReportPage */}
+        <Route path="/report" element={<ReportPage />} />
+        <Route path="/upload" element={<FileUpload />} />
+        <Route path="/hardsim" element={<HardwareSimulator />} />
       </Routes>
       <Footer />
     </Router>

@@ -15,7 +15,14 @@ const WebSocket = require('ws');
 const http = require('http');
 
 const app = express();
-app.use(cors());
+
+// Middleware
+app.use(cors({
+  origin: 'http://localhost:5173', // Add your frontend URL
+  credentials: true
+}));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Pinata SDK initialization
 const pinata = new PinataSDK({
@@ -365,7 +372,6 @@ const OBDData = mongoose.model('OBDData', obdDataSchema);
 
 // Express setup
 const PORT = process.env.PORT || 3000;
-app.use(bodyParser.json());
 
 // Web3 setup
 const web3 = new Web3(process.env.ETH_PROVIDER);

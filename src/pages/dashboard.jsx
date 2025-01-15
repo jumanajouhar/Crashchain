@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { FileText, Image, File } from "lucide-react";
+import { FileText, Image, File, CheckCircle, XCircle } from "lucide-react";
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState([]);
@@ -106,6 +106,22 @@ const Dashboard = () => {
     return `${formattedSize.toFixed(2)} ${units[unitIndex]}`;
   };
 
+  const isGroupVerified = (group) => {
+    // If there's no blockchain data or files, return false
+    if (!group.blockchainData?.length || !group.files?.length) return false;
+
+    // Get all CIDs from blockchain data
+    const blockchainCids = group.blockchainData.reduce((acc, data) => {
+      return acc.concat(data.cids || []);
+    }, []);
+
+    // Get all CIDs from files
+    const fileCids = group.files.map(file => file.cid);
+
+    // Check if all file CIDs are present in blockchain CIDs
+    return fileCids.every(cid => blockchainCids.includes(cid));
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -164,7 +180,20 @@ const Dashboard = () => {
             className="bg-white rounded-lg shadow overflow-hidden border border-gray-200"
           >
             <div className="border-b bg-gray-100 p-6">
-              <h2 className="text-xl font-semibold text-gray-700">{group.groupName}</h2>
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-700">{group.groupName}</h2>
+                {isGroupVerified(group) ? (
+                  <div className="flex items-center text-green-600">
+                    <CheckCircle className="w-5 h-5 mr-1" />
+                    <span className="text-sm font-medium">Verified</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center text-red-600">
+                    <XCircle className="w-5 h-5 mr-1" />
+                    <span className="text-sm font-medium">Unverified</span>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="p-6">
               <div className="space-y-4">

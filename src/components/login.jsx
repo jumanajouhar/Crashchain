@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../firebaseConfig';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { useWeb3 } from '../context/Web3Context';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -9,6 +10,13 @@ const Login = () => {
   const [resetEmail, setResetEmail] = useState('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const navigate = useNavigate();
+  const { account, isConnected, connectWallet } = useWeb3();
+
+  useEffect(() => {
+    if (isConnected) {
+      navigate('/dashboard');
+    }
+  }, [isConnected, navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -18,6 +26,15 @@ const Login = () => {
       navigate('/dashboard');
     } catch (error) {
       console.error('Error logging in:', error);
+    }
+  };
+
+  const handleMetaMaskLogin = async () => {
+    try {
+      await connectWallet();
+      console.log('MetaMask connected');
+    } catch (error) {
+      console.error('Error connecting MetaMask:', error);
     }
   };
 
@@ -32,6 +49,11 @@ const Login = () => {
     } catch (error) {
       console.error('Error sending password reset email:', error);
     }
+  };
+
+  const formatAddress = (address) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   return (
@@ -70,7 +92,7 @@ const Login = () => {
           // Login Form
           <>
             <h2 className="mb-5 text-4xl text-blue-500 font-bold">Login</h2>
-            <form onSubmit={handleLogin}>
+            <form onSubmit={handleLogin} className="mb-4">
               <input
                 type="email"
                 placeholder="Email"
@@ -91,9 +113,26 @@ const Login = () => {
                 type="submit"
                 className="w-full p-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-200"
               >
-                Login
+                Login with Email
               </button>
             </form>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleMetaMaskLogin}
+              className="w-full p-3 mb-4 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center"
+            >
+              Connect with MetaMask
+            </button>
+
             <div className="mt-5 space-y-3">
               <p
                 className="text-blue-500 hover:text-blue-600 cursor-pointer"

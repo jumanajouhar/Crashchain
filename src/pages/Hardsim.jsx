@@ -83,6 +83,9 @@ const HardwareSimulator = () => {
         method: 'POST',
         body: formData,
         credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        }
       });
       
       if (!response.ok) {

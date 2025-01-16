@@ -17,32 +17,57 @@ contract CrashMetadataStorage {
         string dataId;     // MongoDB document ID
         string vin;        // Vehicle Identification Number
         uint256 timestamp; // Time of data recording
-        string location;   // GPS location (e.g., 40.7128N, 74.0060W)
+        string location;   // GPS location
+        string[] cids;     // IPFS CIDs for associated files
     }
 
     CrashMetadata[] public metadataArray;
-
+    
+    // Event to emit when new metadata is stored
+    event MetadataStored(uint256 indexed index, string dataId, string vin, string[] cids);
+    
     function storeMetadata(
         string memory _dataId,
         string memory _vin,
-        string memory _location
+        string memory _location,
+        string[] memory _cids
     ) public onlyOwner {
-        metadataArray.push(
-            CrashMetadata({
-                dataId: _dataId,
-                vin: _vin,
-                timestamp: block.timestamp,
-                location: _location
-            })
+        CrashMetadata memory newMetadata = CrashMetadata({
+            dataId: _dataId,
+            vin: _vin,
+            timestamp: block.timestamp,
+            location: _location,
+            cids: _cids
+        });
+        
+        metadataArray.push(newMetadata);
+        emit MetadataStored(metadataArray.length - 1, _dataId, _vin, _cids);
+    }
+
+    function getMetadata(uint256 index) public view returns (
+        string memory dataId,
+        string memory vin,
+        uint256 timestamp,
+        string memory location,
+        string[] memory cids
+    ) {
+        require(index < metadataArray.length, "Index out of bounds");
+        CrashMetadata memory metadata = metadataArray[index];
+        return (
+            metadata.dataId,
+            metadata.vin,
+            metadata.timestamp,
+            metadata.location,
+            metadata.cids
         );
     }
 
-    function getMetadata(uint index) public view returns (CrashMetadata memory) {
-        require(index < metadataArray.length, "Index out of bounds");
-        return metadataArray[index];
-    }
-
-    function getTotalMetadataCount() public view returns (uint) {
+    function getTotalMetadataCount() public view returns (uint256) {
         return metadataArray.length;
+    }
+    
+    function getCidsForMetadata(uint256 index) public view returns (string[] memory) {
+        require(index < metadataArray.length, "Index out of bounds");
+        return metadataArray[index].cids;
     }
 }

@@ -30,11 +30,10 @@ function generateCrashReport(analysis, outputPath) {
         doc.text("Crash Detection Report", { align: "center" });
         doc.moveDown(2);
 
-        // Remove Markdown symbols and structure text
-        const cleanedAnalysis = analysis
-            .replace(/### /g, "") // Remove headers
-            .replace(/#### /g, "") // Remove sub-headers
-            .replace(/\*\*(.*?)\*\*/g, "$1") // Remove Markdown bold (**text**) but keep content
+        // Clean and format text
+        let cleanedAnalysis = analysis
+            .replace(/#/g, "") // Remove all occurrences of `#`
+            .replace(/\*\*(.*?)\*\*/g, "$1") // Remove Markdown bold (`**text**`) but keep content
             .replace(/- /g, "• "); // Convert hyphen bullet points to proper bullets
 
         // Process sections properly

@@ -13,8 +13,14 @@ const axios = require('axios');
 const FormData = require('form-data');
 const WebSocket = require('ws');
 const http = require('http');
+const crashReportRoutes = require("./routes/crashReport");
+
 
 const app = express();
+
+
+
+
 
 // Middleware
 app.use(cors({
@@ -25,6 +31,8 @@ app.use(cors({
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use("/crash-report", crashReportRoutes);
 
 // Pinata SDK initialization
 const pinata = new PinataSDK({

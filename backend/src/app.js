@@ -116,7 +116,7 @@ const uploadRoutes = require('./routes/upload.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const metadataRoutes = require('./routes/metadata.routes');
 
-app.use('/api/upload', uploadRoutes);
+app.use('/api', uploadRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/metadata', metadataRoutes);
 

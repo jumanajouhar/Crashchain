@@ -1,26 +1,19 @@
-#include "BluetoothSerial.h"
-
-BluetoothSerial SerialBT;
+#include <FS.h>
+#include <SD_MMC.h>
 
 void setup() {
-  Serial.begin(115200);
+    Serial.begin(115200);
+    delay(1000);
 
-  if (!SerialBT.begin("ESP32")) {
-    Serial.println("An error occurred initializing Bluetooth");
-    return;
-  }
-  Serial.println("Bluetooth started. Scanning...");
+    Serial.println("Initializing SD card...");
+    if (!SD_MMC.begin()) {
+        Serial.println("SD card initialization failed!");
+        return;
+    }
 
-  // Scan for devices
-  SerialBT.discoverDevices();
-  delay(5000);
-
-  // List devices
-  int deviceCount = SerialBT.availableDevices();
-  Serial.printf("Found %d devices:\n", deviceCount);
-  for (int i = 0; i < deviceCount; i++) {
-    Serial.printf("Device %d: %s\n", i, SerialBT.getDeviceName(i));
-  }
+    Serial.println("SD card initialized successfully!");
 }
 
-void loop() {}
+void loop() {
+    // Nothing to do in loop
+}

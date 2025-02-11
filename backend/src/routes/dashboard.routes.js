@@ -3,7 +3,7 @@ const router = express.Router();
 const dashboardController = require('../controllers/dashboard.controller');
 
 // Route from your original /api/dashboard-data endpoint
-router.get('/data', async (req, res) => {
+router.get('/api/dashboard-data', async (req, res) => {
   try {
     if (!dashboardData || dashboardData.length === 0) {
       dashboardData = await fetchAllGroupsAndFiles();
@@ -16,7 +16,7 @@ router.get('/data', async (req, res) => {
 });
 
 // Route from your original /api/fetch-group-data/:groupId endpoint
-router.get('/group/:groupId', async (req, res) => {
+router.get('/api/fetch-group-data/:groupId', async (req, res) => {
   const { groupId } = req.params;
 
   try {

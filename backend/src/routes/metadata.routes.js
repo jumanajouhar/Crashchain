@@ -3,7 +3,7 @@ const router = express.Router();
 const { crashContract } = require('../config/blockchain');
 
 // Route from your original /verify-metadata/:index endpoint
-router.get('/verify/:index', async (req, res) => {
+router.get('/verify-metadata/:index', async (req, res) => {
   const { index } = req.params;
 
   try {

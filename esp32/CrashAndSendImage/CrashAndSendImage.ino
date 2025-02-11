@@ -1,4 +1,4 @@
- +#include <Wire.h>
+#include <Wire.h>
 #define sensor_t mpu_sensor_t
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
@@ -10,8 +10,8 @@
 const char* ssid = "realme 8";
 const char* password = "12345678";
 
-const char* obdServerUrl = "http://192.168.55.91:3000/obd"; // Replace with your server's IP for OBD data
-const char* imageServerUrl = "http://192.168.55.91:3000/image"; // Replace with your server's IP for image upload
+const char* obdServerUrl = "http://10.10.160.81:3000/obd"; // Replace with your server's IP for OBD data
+const char* imageServerUrl = "http://10.10.160.81:3000/image"; // Replace with your server's IP for image upload
 
 #define SDA_PIN 2
 #define SCL_PIN 14

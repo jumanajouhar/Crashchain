@@ -19,86 +19,66 @@ const HardwareSimulator = () => {
     engineRpm: ''
   });
 
-  const [uploadedFile, setUploadedFile] = useState(null);
+  const [uploadedMediaFile, setUploadedMediaFile] = useState(null);
+  const [uploadedDataFile, setUploadedDataFile] = useState(null);
 
-  const handleFileUpload = (event) => {
-    setUploadedFile(event.target.files[0]);
+  const handleFileUpload = (event, fileType) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (fileType === 'media') {
+        setUploadedMediaFile(file);
+      } else if (fileType === 'data') {
+        setUploadedDataFile(file);
+      }
+    }
   };
 
   const handleInputChange = (event, category) => {
     const { name, value } = event.target;
-    console.log('Input change:', { category, name, value });
-    
-    // Convert the input name to match state property names
     const stateKey = name.replace(/\s+/g, '').replace(/^./, c => c.toLowerCase());
-    
+
     if (category === 'vehicle') {
-      setVehicleDetails(prev => {
-        const updated = { ...prev, [stateKey]: value };
-        console.log('Updated vehicle details:', updated);
-        return updated;
-      });
+      setVehicleDetails(prev => ({ ...prev, [stateKey]: value }));
     } else if (category === 'crash') {
-      setCrashDetails(prev => {
-        const updated = { ...prev, [stateKey]: value };
-        console.log('Updated crash details:', updated);
-        return updated;
-      });
+      setCrashDetails(prev => ({ ...prev, [stateKey]: value }));
     } else if (category === 'additional') {
-      setAdditionalData(prev => {
-        const updated = { ...prev, [stateKey]: value };
-        console.log('Updated additional data:', updated);
-        return updated;
-      });
+      setAdditionalData(prev => ({ ...prev, [stateKey]: value }));
     }
   };
 
   const handleSubmit = async () => {
     const formData = new FormData();
-    if (uploadedFile) {
-      formData.append('file', uploadedFile);
+
+    if (uploadedMediaFile) {
+      formData.append('image', uploadedMediaFile);
     }
-    
-    // Vehicle details
-    Object.entries(vehicleDetails).forEach(([key, value]) => {
-      formData.append(key, value);
-      console.log(`Appending ${key}:`, value);
-    });
+    if (uploadedDataFile) {
+      formData.append('file', uploadedDataFile);
+    }
 
-    // Crash details
-    Object.entries(crashDetails).forEach(([key, value]) => {
-      formData.append(key, value);
-      console.log(`Appending ${key}:`, value);
-    });
-
-    // Additional data
-    Object.entries(additionalData).forEach(([key, value]) => {
-      formData.append(key, value);
-      console.log(`Appending ${key}:`, value);
-    });
+    // Append other form fields
+    Object.entries(vehicleDetails).forEach(([key, value]) => formData.append(key, value));
+    Object.entries(crashDetails).forEach(([key, value]) => formData.append(key, value));
+    Object.entries(additionalData).forEach(([key, value]) => formData.append(key, value));
 
     try {
-      console.log('Submitting form data...');
-      const response = await fetch('http://localhost:3000/api/upload-and-process', {
+      const response = await fetch('http://localhost:3000/crash-report/upload-and-analyze', {
         method: 'POST',
         body: formData,
         credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-        }
+        headers: { 'Accept': 'application/json' }
       });
-      
+
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const result = await response.json();
-      console.log('Upload successful:', result);
-      alert('Data uploaded successfully!');
+      console.log('Upload and analysis successful:', result);
+      alert('Data uploaded and analyzed successfully!');
     } catch (error) {
       console.error('Submission error:', error);
-      alert(`Error uploading data: ${error.message}`);
+      alert(`Error uploading and analyzing data: ${error.message}`);
     }
   };
 
@@ -107,28 +87,32 @@ const HardwareSimulator = () => {
       <div className="w-full max-w-3xl bg-white shadow-2xl rounded-lg p-8">
         <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">Hardware Data Simulator</h2>
 
+        <h3 className="text-2xl font-semibold text-gray-700 mb-4">Upload Files</h3>
         <div className="mb-6">
           <label className="block text-lg font-medium text-gray-700 mb-2">Upload Photo/Video</label>
           <input
             type="file"
             accept="image/*,video/*"
-            onChange={handleFileUpload}
+            onChange={(e) => handleFileUpload(e, 'media')}
+            className="block w-full text-sm text-gray-500 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mb-4"
+          />
+          <label className="block text-lg font-medium text-gray-700 mb-2">Upload CSV/Excel File</label>
+          <input
+            type="file"
+            accept=".csv, .xls, .xlsx"
+            onChange={(e) => handleFileUpload(e, 'data')}
             className="block w-full text-sm text-gray-500 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
         <h3 className="text-2xl font-semibold text-gray-700 mb-4">Vehicle Details</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {[
-            { label: 'VIN Number', name: 'vinNumber' },
-            { label: 'ECU Identifier', name: 'ecuIdentifier' },
-            { label: 'Distance Traveled', name: 'distanceTraveled' }
-          ].map((field, index) => (
+          {['VIN Number', 'ECU Identifier', 'Distance Traveled'].map((label, index) => (
             <div key={index}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
               <input
                 type="text"
-                name={field.name}
+                name={label}
                 onChange={(e) => handleInputChange(e, 'vehicle')}
                 className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
               />
@@ -138,17 +122,12 @@ const HardwareSimulator = () => {
 
         <h3 className="text-2xl font-semibold text-gray-700 mb-4">Crash Event Details</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {[
-            { label: 'Date', name: 'date' },
-            { label: 'Time', name: 'time' },
-            { label: 'Location', name: 'location' },
-            { label: 'Impact Severity', name: 'impactSeverity' }
-          ].map((field, index) => (
+          {['Date', 'Time', 'Location', 'Impact Severity'].map((label, index) => (
             <div key={index}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
               <input
                 type="text"
-                name={field.name}
+                name={label}
                 onChange={(e) => handleInputChange(e, 'crash')}
                 className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
               />
@@ -158,15 +137,12 @@ const HardwareSimulator = () => {
 
         <h3 className="text-2xl font-semibold text-gray-700 mb-4">Additional Data</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-          {[
-            { label: 'Brake Position', name: 'brakePosition' },
-            { label: 'Engine RPM', name: 'engineRpm' }
-          ].map((field, index) => (
+          {['Brake Position', 'Engine RPM'].map((label, index) => (
             <div key={index}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
               <input
                 type="text"
-                name={field.name}
+                name={label}
                 onChange={(e) => handleInputChange(e, 'additional')}
                 className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
               />

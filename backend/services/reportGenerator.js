@@ -1,7 +1,7 @@
 const PDFDocument = require("pdfkit");
 const fs = require("fs");
 
-function generateCrashReport(analysis, outputPath) {
+function generateCrashReport(data, outputPath) {
     return new Promise((resolve, reject) => {
         const doc = new PDFDocument({
             margin: 50,
@@ -30,46 +30,37 @@ function generateCrashReport(analysis, outputPath) {
         doc.text("Crash Detection Report", { align: "center" });
         doc.moveDown(2);
 
-        // Clean and format text
-        let cleanedAnalysis = analysis
-            .replace(/#/g, "") // Remove all occurrences of `#`
-            .replace(/\*\*(.*?)\*\*/g, "$1") // Remove Markdown bold (`**text**`) but keep content
-            .replace(/- /g, "• "); // Convert hyphen bullet points to proper bullets
+        // Add vehicle and crash details
+        applyStyle(styles.sectionHeader);
+        doc.text("Vehicle Details", { align: "left" });
+        applyStyle(styles.normal);
+        doc.text(`VIN: ${data.vinNumber || 'Not Provided'}`);
+        doc.text(`ECU: ${data.ecuIdentifier || 'Not Provided'}`);
+        doc.text(`Distance: ${data.distanceTraveled || 'Not Provided'}`);
+        doc.moveDown(1);
 
-        // Process sections properly
-        const sections = cleanedAnalysis.split("\n\n");
-        sections.forEach((section, index) => {
-            const lines = section.split("\n");
-            lines.forEach((line) => {
-                if (line.trim() === "") return;
+        applyStyle(styles.sectionHeader);
+        doc.text("Crash Details", { align: "left" });
+        applyStyle(styles.normal);
+        doc.text(`Date: ${data.date || 'Not Provided'}`);
+        doc.text(`Time: ${data.time || 'Not Provided'}`);
+        doc.text(`Location: ${data.location || 'Not Provided'}`);
+        doc.text(`Severity: ${data.impactSeverity || 'Not Provided'}`);
+        doc.moveDown(1);
 
-                if (line.match(/^Crash Likelihood|Detected Anomalies|Possible Causes|Recommendations/)) {
-                    // Main section headers
-                    applyStyle(styles.sectionHeader);
-                    doc.text(line.trim());
-                    doc.moveDown(1);
-                } else if (line.match(/^\d+\./)) {
-                    // Numbered lists
-                    applyStyle(styles.normal);
-                    doc.text(line.trim(), { indent: styles.bulletPoint.indent });
-                    doc.moveDown(styles.bulletPoint.spacing);
-                } else if (line.startsWith("•")) {
-                    // Bullet points
-                    applyStyle(styles.normal);
-                    doc.text(line.trim(), { indent: styles.bulletPoint.indent * 2 });
-                    doc.moveDown(styles.bulletPoint.spacing);
-                } else {
-                    // Regular text
-                    applyStyle(styles.normal);
-                    doc.text(line.trim(), { align: "left" });
-                    doc.moveDown(0.5);
-                }
-            });
+        applyStyle(styles.sectionHeader);
+        doc.text("Additional Data", { align: "left" });
+        applyStyle(styles.normal);
+        doc.text(`Brake Position: ${data.brakePosition || 'Not Provided'}`);
+        doc.text(`Engine RPM: ${data.engineRpm || 'Not Provided'}`);
+        doc.moveDown(1);
 
-            if (index < sections.length - 1) {
-                doc.moveDown(1);
-            }
-        });
+        // Add analysis from DeepSeek
+        applyStyle(styles.sectionHeader);
+        doc.text("DeepSeek Analysis", { align: "left" });
+        applyStyle(styles.normal);
+        doc.text(data.analysis);
+        doc.moveDown(1);
 
         // Finalize PDF
         doc.end();

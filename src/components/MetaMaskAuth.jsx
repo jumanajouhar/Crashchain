@@ -21,7 +21,7 @@ const MetaMaskAuth = () => {
     <div className="flex items-center">
       {isConnected ? (
         <div className="flex items-center space-x-4">
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-[#F5F5F5]">
             {formatAddress(account)}
           </span>
           <button
@@ -34,7 +34,7 @@ const MetaMaskAuth = () => {
       ) : (
         <button
           onClick={handleConnect}
-          className="flex items-center px-4 py-2 space-x-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex items-center px-4 py-2 space-x-2 text-sm font-medium text-white bg-[#6C63FF] rounded-lg hover:bg-[#FF6584] focus:outline-none focus:ring-2 focus:ring-[#6C63FF]"
         >
           <img
             src="https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg"

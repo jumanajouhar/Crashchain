@@ -33,43 +33,17 @@ const SignUp = () => {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '100vh',
-      backgroundColor: 'white',
-    }}>
-      <div style={{
-        padding: '40px',
-        borderRadius: '10px',
-        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-        textAlign: 'center',
-        width: '400px',
-      }}>
-        <h2 style={{ 
-          marginBottom: '20px',
-          fontSize: '36px',
-          color: '#007bff',
-          fontWeight: 'bold',
-        }}>
-          Sign Up
-        </h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+    <div className="flex justify-center items-center h-screen bg-[#1B1F3B]">
+      <div className="p-10 rounded-lg shadow-lg text-center w-96 bg-[#2C2F48]">
+        <h2 className="mb-5 text-4xl text-[#6C63FF] font-bold">Sign Up</h2>
+        {error && <p className="text-red-500">{error}</p>}
         <form onSubmit={handleSignUp}>
           <input
             type="text"
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              margin: '10px 0',
-              borderRadius: '5px',
-              border: '1px solid #ccc',
-              backgroundColor: 'white',
-            }}
+            className="w-full p-3 mb-3 rounded border border-gray-500 bg-[#3B3F5C] text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6C63FF]"
             required
           />
           <input
@@ -77,14 +51,7 @@ const SignUp = () => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              margin: '10px 0',
-              borderRadius: '5px',
-              border: '1px solid #ccc',
-              backgroundColor: 'white',
-            }}
+            className="w-full p-3 mb-3 rounded border border-gray-500 bg-[#3B3F5C] text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6C63FF]"
             required
           />
           <input
@@ -92,14 +59,7 @@ const SignUp = () => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              margin: '10px 0',
-              borderRadius: '5px',
-              border: '1px solid #ccc',
-              backgroundColor: 'white',
-            }}
+            className="w-full p-3 mb-3 rounded border border-gray-500 bg-[#3B3F5C] text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6C63FF]"
             required
           />
           <input
@@ -107,26 +67,13 @@ const SignUp = () => {
             placeholder="Confirm Password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              margin: '10px 0',
-              borderRadius: '5px',
-              border: '1px solid #ccc',
-              backgroundColor: 'white',
-            }}
+            className="w-full p-3 mb-3 rounded border border-gray-500 bg-[#3B3F5C] text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6C63FF]"
             required
           />
-          <button type="submit" style={{
-            width: '100%',
-            padding: '12px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '16px',
-          }}>
+          <button
+            type="submit"
+            className="w-full p-3 bg-[#6C63FF] text-white rounded hover:bg-[#FF6584] transition-colors duration-200"
+          >
             Sign Up
           </button>
         </form>

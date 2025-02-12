@@ -7,22 +7,27 @@ html {
 }
 
 body {
+  background-color: #1B1F3B;
+  color: #F5F5F5;
+  font-family: 'Arial', sans-serif;
   margin: 0;
-  padding: 0 3em;
+  padding: 0;
+  box-sizing: border-box;
   min-width: 320px;
   min-height: 100vh;
-  background-color:  white;
 }
 
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
+
 .footer{
   width: 100%;
-  background-color: white;
+  background-color: #1B1F3B;
   color: black;
 }
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -78,6 +83,7 @@ h1 {
     --chart-5: 340 75% 55%;
   }
 }
+
 @layer base {
   * {
     @apply border-border;
@@ -85,4 +91,26 @@ h1 {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+a {
+  color: #6C63FF;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #FF6584;
+}
+
+button {
+  background-color: #6C63FF;
+  color: #F5F5F5;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #FF6584;
 }

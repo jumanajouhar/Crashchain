@@ -80,10 +80,10 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-white min-h-screen flex flex-col items-center">
-      <div className="max-w-6xl w-full space-y-6 bg-white p-6 rounded-lg ">
+    <div className="p-6 bg-[#1B1F3B] min-h-screen flex flex-col items-center">
+      <div className="max-w-6xl w-full space-y-6 bg-[#2C2F48] p-6 rounded-lg shadow-lg">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-[#6C63FF]">Dashboard</h1>
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium ${
               wsStatus === "connected"
@@ -96,17 +96,17 @@ const Dashboard = () => {
             {wsStatus === "connected" ? "Live Updates Active" : wsStatus === "connecting" ? "Connecting..." : "Connection Lost"}
           </span>
         </div>
-        {loading && <p className="text-center text-gray-600">Loading dashboard data...</p>}
+        {loading && <p className="text-center text-gray-300">Loading dashboard data...</p>}
         {error && <p className="text-center text-red-600">{error}</p>}
         {dashboardData.length === 0 && !loading && !error && (
-          <div className="bg-white p-6 rounded-lg shadow-md text-center text-gray-500">
+          <div className="bg-[#3B3F5C] p-6 rounded-lg shadow-md text-center text-gray-300">
             No data available. Try uploading some files first.
           </div>
         )}
         {dashboardData.map((group) => (
-          <div key={group.groupId} className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-            <div className="flex justify-between items-center border-b pb-4 mb-4">
-              <h2 className="text-xl font-semibold text-gray-700">{group.groupName}</h2>
+          <div key={group.groupId} className="bg-[#3B3F5C] rounded-lg shadow-md p-6 border border-gray-500">
+            <div className="flex justify-between items-center border-b border-gray-600 pb-4 mb-4">
+              <h2 className="text-xl font-semibold text-gray-300">{group.groupName}</h2>
               {isGroupVerified(group) ? (
                 <span className="flex items-center text-green-600">
                   <CheckCircle className="w-5 h-5 mr-1" /> Verified
@@ -119,14 +119,14 @@ const Dashboard = () => {
             </div>
             <div className="space-y-4">
               {group.files.map((file) => (
-                <div key={file.cid} className="flex items-center p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition">
+                <div key={file.cid} className="flex items-center p-4 border rounded-lg bg-[#2C2F48] hover:bg-[#3B3F5C] transition">
                   <div className="mr-4">{getFileIcon(file.mimeType)}</div>
                   <div className="flex-grow">
-                    <h3 className="font-medium text-gray-800 truncate">{file.name || "Unnamed File"}</h3>
-                    <p className="text-sm text-gray-500">CID: {file.cid}</p>
-                    <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
+                    <h3 className="font-medium text-gray-300 truncate">{file.name || "Unnamed File"}</h3>
+                    <p className="text-sm text-gray-400">CID: {file.cid}</p>
+                    <p className="text-sm text-gray-400">{formatFileSize(file.size)}</p>
                   </div>
-                  <a href={`https://gateway.pinata.cloud/ipfs/${file.cid}`} target="_blank" rel="noopener noreferrer" className="px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
+                  <a href={`https://gateway.pinata.cloud/ipfs/${file.cid}`} target="_blank" rel="noopener noreferrer" className="px-4 py-2 text-sm text-white bg-[#6C63FF] hover:bg-[#FF6584] rounded-lg transition-colors duration-200">
                     View File
                   </a>
                 </div>

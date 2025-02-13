@@ -3,16 +3,21 @@
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
 #undef sensor_t
-#include <HTTPClient.h>
 #include <WiFi.h>
+#include <HTTPClient.h>
+#include <SD_MMC.h>
 #include "esp_camera.h"
 
+// Wi-Fi and Server Settings
 const char* ssid = "SAINTGITS";
 const char* password = "saintgitswifi";
 
-const char* obdServerUrl = "http://10.10.160.81:3000/obd"; // Replace with your server's IP for OBD data
-const char* imageServerUrl = "http://10.10.160.81:3000/image"; // Replace with your server's IP for image upload
+const char* obdServerUrl   = "http://10.10.160.81:3000/obd";
+const char* csvServerUrl   = "http://10.10.160.81:3000/upload-csv";
+const char* imageServerUrl = "http://10.10.160.81:3000/image";
+const char* csvFilePath    = "/data.csv";
 
+// Crash detection threshold
 #define SDA_PIN 2
 #define SCL_PIN 14
 #define ACCEL_THRESHOLD 3.5
@@ -37,16 +42,70 @@ Adafruit_MPU6050 mpu;
 #define HREF_GPIO_NUM 23
 #define PCLK_GPIO_NUM 22
 
-void setup() {
-  Serial.begin(115200);
-
+void connectWiFi() {
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
   Serial.println("\nWi-Fi connected");
+}
 
+void sendObdData() {
+  HTTPClient http;
+  http.begin(obdServerUrl);
+  http.addHeader("Content-Type", "application/json");
+  String jsonPayload = R"({"VIN":"1HGCM82633A123456","speed":45,"acceleration":15.5})";
+  int httpResponseCode = http.POST(jsonPayload);
+  Serial.printf("OBD Data Response Code: %d\n", httpResponseCode);
+  http.end();
+}
+
+void sendCsv() {
+  File file = SD_MMC.open(csvFilePath);
+  if (!file) {
+    Serial.println("Failed to open CSV file");
+    return;
+  }
+  
+  String csvData = "";
+  while (file.available()) {
+    csvData += (char)file.read();
+  }
+  file.close();
+  
+  HTTPClient http;
+  http.begin(csvServerUrl);
+  http.addHeader("Content-Type", "text/csv");
+  int httpResponseCode = http.POST(csvData);
+  Serial.printf("CSV Upload Response Code: %d\n", httpResponseCode);
+  http.end();
+}
+
+void captureAndSendImage(camera_fb_t* fb) {
+  if (!fb) {
+    Serial.println("Camera capture failed");
+    return;
+  }
+  HTTPClient http;
+  http.begin(imageServerUrl);
+  http.addHeader("Content-Type", "image/jpeg");
+  int httpResponseCode = http.POST(fb->buf, fb->len);
+  Serial.printf("Image Upload Response Code: %d\n", httpResponseCode);
+  http.end();
+  esp_camera_fb_return(fb);
+}
+
+void setup() {
+  Serial.begin(115200);
+  connectWiFi();
+
+  if (!SD_MMC.begin()) {
+    Serial.println("SD Card Mount Failed");
+    return;
+  }
+  Serial.println("SD Card mounted");
+  
   Wire.begin(SDA_PIN, SCL_PIN);
 
   if (!mpu.begin(0x68, &Wire)) {
@@ -88,51 +147,9 @@ void setup() {
   Serial.println("Camera initialized");
 }
 
-void sendObdData() {
-  HTTPClient http;
-  http.begin(obdServerUrl);
-  http.addHeader("Content-Type", "application/json");
-
-  String jsonPayload = "{\"VIN\": \"1HGCM82633A123456\", \"speed\": 45, \"throttle_position\": 30, \"brake_position\": 40, \"acceleration\": 15.5}";
-  int httpResponseCode = http.POST(jsonPayload);
-
-  if (httpResponseCode > 0) {
-    Serial.printf("OBD Data Response Code: %d\n", httpResponseCode);
-  } else {
-    Serial.printf("Failed to send OBD data: %s\n", http.errorToString(httpResponseCode).c_str());
-  }
-
-  http.end();
-}
-
-void sendImage(camera_fb_t* fb) {
-  if (!fb || fb->len <= 0) {
-    Serial.println("Invalid frame buffer. Skipping upload.");
-    return;
-  }
-
-  HTTPClient http;
-  http.begin(imageServerUrl);
-  http.addHeader("Content-Type", "image/jpeg");
-
-  int httpResponseCode = http.POST(fb->buf, fb->len);
-
-  if (httpResponseCode > 0) {
-    Serial.printf("Image Upload Response Code: %d\n", httpResponseCode);
-    String response = http.getString();
-    Serial.println("Server response: " + response);
-  } else {
-    Serial.printf("Failed to upload image: %s\n", http.errorToString(httpResponseCode).c_str());
-  }
-
-  http.end();
-  esp_camera_fb_return(fb);
-}
-
 void loop() {
   sensors_event_t accel, gyro, temp;
   mpu.getEvent(&accel, &gyro, &temp);
-
   float magnitude = sqrt(pow(accel.acceleration.x, 2) +
                          pow(accel.acceleration.y, 2) +
                          pow(accel.acceleration.z, 2)) - 9.8;
@@ -140,20 +157,18 @@ void loop() {
 
   if (magnitude > ACCEL_THRESHOLD) {
     Serial.println("Crash detected!");
-
-    // Capture and send OBD data
     sendObdData();
-
+    sendCsv();
+    
     // Capture and send image
     camera_fb_t* fb = esp_camera_fb_get();
     if (!fb) {
       Serial.println("Failed to capture image");
     } else {
       Serial.printf("Image size: %d bytes\n", fb->len);
-      sendImage(fb);
-      esp_camera_fb_return(fb);
+      captureAndSendImage(fb);
+      // Do NOT call esp_camera_fb_return(fb) here as it is already called inside captureAndSendImage()
     }
   }
-
-  delay(1000); // Sampling rate
+  delay(1000);
 }

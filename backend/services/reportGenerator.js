@@ -50,29 +50,18 @@ function generateCrashReport(data, outputPath) {
         doc.text("Crash Detection Report", { align: "center" });
         doc.moveDown(2);
 
-        // Add vehicle and crash details
+        // Add event details
         applyStyle(styles.sectionHeader);
-        doc.text("Vehicle Details", { align: "left" });
+        doc.text("Event Details", { align: "left" });
+        doc.moveDown(0.5);
+        
         applyStyle(styles.normal);
-        doc.text(`VIN: ${data.vinNumber || 'Not Provided'}`);
-        doc.text(`ECU: ${data.ecuIdentifier || 'Not Provided'}`);
-        doc.text(`Distance: ${data.distanceTraveled || 'Not Provided'}`);
-        doc.moveDown(1);
-
-        applyStyle(styles.sectionHeader);
-        doc.text("Crash Details", { align: "left" });
-        applyStyle(styles.normal);
+        doc.text(`VIN Number: ${data.vinNumber || 'Not Provided'}`);
+        doc.text(`ECU Identifier: ${data.ecuIdentifier || 'Not Provided'}`);
+        doc.text(`Distance Traveled: ${data.distanceTraveled || 'Not Provided'}`);
         doc.text(`Date: ${data.date || 'Not Provided'}`);
         doc.text(`Time: ${data.time || 'Not Provided'}`);
         doc.text(`Location: ${data.location || 'Not Provided'}`);
-        doc.text(`Severity: ${data.impactSeverity || 'Not Provided'}`);
-        doc.moveDown(1);
-
-        applyStyle(styles.sectionHeader);
-        doc.text("Additional Data", { align: "left" });
-        applyStyle(styles.normal);
-        doc.text(`Brake Position: ${data.brakePosition || 'Not Provided'}`);
-        doc.text(`Engine RPM: ${data.engineRpm || 'Not Provided'}`);
         doc.moveDown(1);
 
         // Add analysis from DeepSeek

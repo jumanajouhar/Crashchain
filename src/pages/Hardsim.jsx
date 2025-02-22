@@ -10,13 +10,7 @@ const HardwareSimulator = () => {
   const [crashDetails, setCrashDetails] = useState({
     date: '',
     time: '',
-    location: '',
-    impactSeverity: ''
-  });
-
-  const [additionalData, setAdditionalData] = useState({
-    brakePosition: '',
-    engineRpm: ''
+    location: ''
   });
 
   const [uploadedMediaFile, setUploadedMediaFile] = useState(null);
@@ -41,8 +35,6 @@ const HardwareSimulator = () => {
       setVehicleDetails(prev => ({ ...prev, [stateKey]: value }));
     } else if (category === 'crash') {
       setCrashDetails(prev => ({ ...prev, [stateKey]: value }));
-    } else if (category === 'additional') {
-      setAdditionalData(prev => ({ ...prev, [stateKey]: value }));
     }
   };
 
@@ -59,7 +51,6 @@ const HardwareSimulator = () => {
     // Append other form fields
     Object.entries(vehicleDetails).forEach(([key, value]) => formData.append(key, value));
     Object.entries(crashDetails).forEach(([key, value]) => formData.append(key, value));
-    Object.entries(additionalData).forEach(([key, value]) => formData.append(key, value));
 
     try {
       const response = await fetch('http://localhost:3000/crash-report/upload-and-analyze', {
@@ -105,45 +96,22 @@ const HardwareSimulator = () => {
           />
         </div>
 
-        <h3 className="text-3xl font-semibold text-[#6C63FF] mb-6">Vehicle Details</h3>
+        <h3 className="text-3xl font-semibold text-[#6C63FF] mb-6">Event Details</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-          {['VIN Number', 'ECU Identifier', 'Distance Traveled'].map((label, index) => (
+          {[
+            'VIN Number',
+            'ECU Identifier',
+            'Distance Traveled',
+            'Date',
+            'Time',
+            'Location'
+          ].map((label, index) => (
             <div key={index} className="transition duration-200 ease-in-out transform hover:scale-105">
               <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
               <input
                 type="text"
                 name={label}
-                onChange={(e) => handleInputChange(e, 'vehicle')}
-                className="block w-full border border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-[#6C63FF] focus:border-[#6C63FF] sm:text-sm p-3 bg-[#3B3F5C] text-gray-300"
-              />
-            </div>
-          ))}
-        </div>
-
-        <h3 className="text-3xl font-semibold text-[#6C63FF] mb-6">Crash Event Details</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-          {['Date', 'Time', 'Location', 'Impact Severity'].map((label, index) => (
-            <div key={index} className="transition duration-200 ease-in-out transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
-              <input
-                type="text"
-                name={label}
-                onChange={(e) => handleInputChange(e, 'crash')}
-                className="block w-full border border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-[#6C63FF] focus:border-[#6C63FF] sm:text-sm p-3 bg-[#3B3F5C] text-gray-300"
-              />
-            </div>
-          ))}
-        </div>
-
-        <h3 className="text-3xl font-semibold text-[#6C63FF] mb-6">Additional Data</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-          {['Brake Position', 'Engine RPM'].map((label, index) => (
-            <div key={index} className="transition duration-200 ease-in-out transform hover:scale-105">
-              <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
-              <input
-                type="text"
-                name={label}
-                onChange={(e) => handleInputChange(e, 'additional')}
+                onChange={(e) => handleInputChange(e, label.includes('VIN') || label.includes('ECU') || label.includes('Distance') ? 'vehicle' : 'crash')}
                 className="block w-full border border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-[#6C63FF] focus:border-[#6C63FF] sm:text-sm p-3 bg-[#3B3F5C] text-gray-300"
               />
             </div>

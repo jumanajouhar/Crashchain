@@ -20,10 +20,29 @@ const HardwareSimulator = () => {
 
   const handleInputChange = (event, category) => {
     const { name, value } = event.target;
+    console.log('Input change:', { category, name, value });
+    
+    // Convert the input name to match state property names
+    const stateKey = name.replace(/\s+/g, '').replace(/^./, c => c.toLowerCase());
+    
     if (category === 'vehicle') {
-      setVehicleDetails({ ...vehicleDetails, [name]: value });
+      setVehicleDetails(prev => {
+        const updated = { ...prev, [stateKey]: value };
+        console.log('Updated vehicle details:', updated);
+        return updated;
+      });
+    } else if (category === 'crash') {
+      setCrashDetails(prev => {
+        const updated = { ...prev, [stateKey]: value };
+        console.log('Updated crash details:', updated);
+        return updated;
+      });
     } else if (category === 'additional') {
-      setAdditionalData({ ...additionalData, [name]: value });
+      setAdditionalData(prev => {
+        const updated = { ...prev, [stateKey]: value };
+        console.log('Updated additional data:', updated);
+        return updated;
+      });
     }
   };
 
@@ -48,31 +67,49 @@ const HardwareSimulator = () => {
     if (uploadedFile) {
       formData.append('file', uploadedFile);
     }
+    
+    // Vehicle details
+    Object.entries(vehicleDetails).forEach(([key, value]) => {
+      formData.append(key, value);
+      console.log(`Appending ${key}:`, value);
+    });
 
-    // Append vehicle details
-    formData.append('vinNumber', vehicleDetails.vinNumber);
-    formData.append('location', vehicleDetails.location);
+    // Crash details
+    Object.entries(crashDetails).forEach(([key, value]) => {
+      formData.append(key, value);
+      console.log(`Appending ${key}:`, value);
+    });
 
-    // Append additional data
-    formData.append('impactSeverity', additionalData.impactSeverity);
-    formData.append('throttlePosition', additionalData.throttlePosition);
-    formData.append('brakePosition', additionalData.brakePosition);
+    // Additional data
+    Object.entries(additionalData).forEach(([key, value]) => {
+      formData.append(key, value);
+      console.log(`Appending ${key}:`, value);
+    });
+
 
     try {
+      console.log('Submitting form data...');
       const response = await fetch('http://localhost:3000/api/upload-and-process', {
         method: 'POST',
         body: formData,
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        }
       });
-      const result = await response.json();
-      if (response.ok) {
-        alert(`Data uploaded successfully. Group ID: ${result.groupId}`);
-        console.log('Upload details:', result);
-      } else {
-        alert(`Error: ${result.error}`);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
+      
+      const result = await response.json();
+      console.log('Upload successful:', result);
+      alert('Data uploaded successfully!');
     } catch (error) {
       console.error('Submission error:', error);
-      alert('Failed to submit data');
+
+      alert(`Error uploading data: ${error.message}`);
     }
   };
 
@@ -91,72 +128,61 @@ const HardwareSimulator = () => {
           />
         </div>
 
-        <h3 className="text-2xl font-semibold text-gray-700 mb-4">Vehicle Information</h3>
-        <div className="grid grid-cols-1 gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">VIN Number *</label>
-            <input
-              type="text"
-              name="vinNumber"
-              value={vehicleDetails.vinNumber}
-              onChange={(e) => handleInputChange(e, 'vehicle')}
-              required
-              className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
-              placeholder="Enter VIN Number"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Location *</label>
-            <input
-              type="text"
-              name="location"
-              value={vehicleDetails.location}
-              onChange={(e) => handleInputChange(e, 'vehicle')}
-              required
-              className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
-              placeholder="Enter Crash Location"
-            />
-          </div>
+        <h3 className="text-2xl font-semibold text-gray-700 mb-4">Vehicle Details</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          {[
+            { label: 'VIN Number', name: 'vinNumber' },
+            { label: 'ECU Identifier', name: 'ecuIdentifier' },
+            { label: 'Distance Traveled', name: 'distanceTraveled' }
+          ].map((field, index) => (
+            <div key={index}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+              <input
+                type="text"
+                name={field.name}
+                onChange={(e) => handleInputChange(e, 'vehicle')}
+                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
+              />
+            </div>
+          ))}
         </div>
 
-        <h3 className="text-2xl font-semibold text-gray-700 mb-4">Crash Details</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Impact Severity *</label>
-            <input
-              type="text"
-              name="impactSeverity"
-              value={additionalData.impactSeverity}
-              onChange={(e) => handleInputChange(e, 'additional')}
-              required
-              className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
-              placeholder="Severity Level"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Throttle Position *</label>
-            <input
-              type="text"
-              name="throttlePosition"
-              value={additionalData.throttlePosition}
-              onChange={(e) => handleInputChange(e, 'additional')}
-              required
-              className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
-              placeholder="Throttle Position"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Brake Position *</label>
-            <input
-              type="text"
-              name="brakePosition"
-              value={additionalData.brakePosition}
-              onChange={(e) => handleInputChange(e, 'additional')}
-              required
-              className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
-              placeholder="Brake Position"
-            />
-          </div>
+        <h3 className="text-2xl font-semibold text-gray-700 mb-4">Crash Event Details</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          {[
+            { label: 'Date', name: 'date' },
+            { label: 'Time', name: 'time' },
+            { label: 'Location', name: 'location' },
+            { label: 'Impact Severity', name: 'impactSeverity' }
+          ].map((field, index) => (
+            <div key={index}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+              <input
+                type="text"
+                name={field.name}
+                onChange={(e) => handleInputChange(e, 'crash')}
+                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
+              />
+            </div>
+          ))}
+        </div>
+
+        <h3 className="text-2xl font-semibold text-gray-700 mb-4">Additional Data</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          {[
+            { label: 'Brake Position', name: 'brakePosition' },
+            { label: 'Engine RPM', name: 'engineRpm' }
+          ].map((field, index) => (
+            <div key={index}>
+              <label className="block text-sm font-medium text-gray-700 mb-1">{field.label}</label>
+              <input
+                type="text"
+                name={field.name}
+                onChange={(e) => handleInputChange(e, 'additional')}
+                className="block w-full border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm p-2"
+              />
+            </div>
+          ))}
         </div>
 
         <button

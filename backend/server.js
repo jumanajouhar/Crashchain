@@ -13,9 +13,26 @@ const axios = require('axios');
 const FormData = require('form-data');
 const WebSocket = require('ws');
 const http = require('http');
+const crashReportRoutes = require("./routes/crashReport");
+
 
 const app = express();
-app.use(cors());
+
+
+
+
+
+// Middleware
+app.use(cors({
+  origin: 'http://localhost:5173', // Frontend URL
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use("/crash-report", crashReportRoutes);
 
 // Multer configuration for file uploads
 const upload = multer({
@@ -425,28 +442,26 @@ const OBDData = mongoose.model('OBDData', obdDataSchema);
 
 // Express setup
 const PORT = process.env.PORT || 3000;
-app.use(bodyParser.json());
 
 // Web3 setup
-const web3 = new Web3(process.env.ETH_PROVIDER);
+const web3 = new Web3(process.env.ETH_PROVIDER || 'http://127.0.0.1:7545');
 let contractABI;
 try {
   contractABI = require('./blockchain/build/contracts/CrashMetadataStorage.json').abi;
   console.log('[DEBUG] Successfully loaded contract ABI');
 } catch (error) {
   console.error('[DEBUG] Error loading contract ABI:', error);
-  process.exit(1);
+  contractABI = null;
 }
 
 const contractAddress = process.env.CONTRACT_ADDRESS;
 console.log('[DEBUG] Using contract address:', contractAddress);
-console.log('[DEBUG] Using ETH provider:', process.env.ETH_PROVIDER);
+console.log('[DEBUG] Using ETH provider:', process.env.ETH_PROVIDER || 'http://127.0.0.1:7545');
 
-// Test Ganache connection first
+// Test Ganache connection but don't fail if it's not available
 web3.eth.net.isListening()
   .then(async () => {
-    console.log('[DEBUG] Successfully connected to Ganache');
-    
+    console.log('[DEBUG] Successfully connected to Ethereum network');
     try {
       const networkId = await web3.eth.net.getId();
       console.log('[DEBUG] Connected to network ID:', networkId);
@@ -456,30 +471,13 @@ web3.eth.net.isListening()
       
       const balance = await web3.eth.getBalance(accounts[0]);
       console.log('[DEBUG] First account balance:', web3.utils.fromWei(balance, 'ether'), 'ETH');
-      
-      // Check if contract exists
-      const code = await web3.eth.getCode(contractAddress);
-      if (code === '0x' || code === '0x0') {
-        console.error('[DEBUG] ⚠️ No contract found at address:', contractAddress);
-        console.error('[DEBUG] Please ensure the contract is deployed to Ganache and the address is correct');
-      } else {
-        console.log('[DEBUG] Contract code found at address:', contractAddress);
-        
-        // Try to call a view function
-        try {
-          const count = await crashContract.methods.getTotalMetadataCount().call();
-          console.log('[DEBUG] Total metadata count:', count.toString());
-        } catch (error) {
-          console.error('[DEBUG] Error calling getTotalMetadataCount:', error.message);
-        }
-      }
     } catch (error) {
-      console.error('[DEBUG] Error during Ganache checks:', error);
+      console.log('[DEBUG] Error fetching network details:', error.message);
     }
   })
-  .catch(err => {
-    console.error('[DEBUG] Failed to connect to Ganache:', err);
-    console.error('[DEBUG] Please ensure Ganache is running on', process.env.ETH_PROVIDER);
+  .catch((error) => {
+    console.log('[DEBUG] Could not connect to Ethereum network:', error.message);
+    // Continue running the server even if Ethereum connection fails
   });
 
 const crashContract = new web3.eth.Contract(contractABI, contractAddress);

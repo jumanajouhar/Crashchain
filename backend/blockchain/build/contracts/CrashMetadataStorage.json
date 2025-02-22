@@ -9862,12 +9862,13 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0xB5031E199003897c0e73313Ea2aC1f28610e54B1",
-      "transactionHash": "0x76d158eed5b768a4d92bae84e34abd3f060eb8048ddd0a854ad02e7845157097"
+
+      "address": "0x517FFe01D4F239489A7baCeEDB66ea746418dc3A",
+      "transactionHash": "0x92df9b8bfc38cc653ab826082f04103046bc558b4e8d616ab7f1741b8525e8dd"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2025-01-14T18:27:48.213Z",
+  "updatedAt": "2025-01-16T18:34:18.983Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

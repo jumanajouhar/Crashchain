@@ -8,7 +8,8 @@ import {
   Bars3Icon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
-import logo from './images/logo.jpg';
+import { useWeb3 } from '../context/Web3Context'
+import logo from './images/logo.jpg'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -17,6 +18,12 @@ function classNames(...classes) {
 export default function Header({ isLoggedIn }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
+  const { account, isConnected, disconnectWallet } = useWeb3()
+
+  const formatAddress = (address) => {
+    if (!address) return '';
+    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  };
 
   const handleNavigation = (href) => {
     setMobileMenuOpen(false)
@@ -28,7 +35,7 @@ export default function Header({ isLoggedIn }) {
         section.scrollIntoView({ behavior: 'smooth' })
       }
     } else if (href === '#Dashboard') {
-      if (isLoggedIn) {
+      if (isLoggedIn || isConnected) {
         navigate('/dashboard')
       } else {
         navigate('/login')
@@ -76,10 +83,25 @@ export default function Header({ isLoggedIn }) {
           ))}
         </div>
 
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-          <a href="/login" className="text-sm font-semibold leading-6 text-gray-900">
-            Log in <span aria-hidden="true">&rarr;</span>
-          </a>
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:space-x-4">
+          {isConnected && (
+            <div className="flex items-center space-x-4">
+              <span className="text-sm font-medium text-gray-700">
+                {formatAddress(account)}
+              </span>
+              <button
+                onClick={disconnectWallet}
+                className="text-sm font-medium text-red-600 bg-red-100 px-3 py-2 rounded-lg hover:bg-red-200"
+              >
+                Disconnect
+              </button>
+            </div>
+          )}
+          {!isConnected && !isLoggedIn && (
+            <a href="/login" className="text-sm font-semibold leading-6 text-gray-900">
+              Log in <span aria-hidden="true">&rarr;</span>
+            </a>
+          )}
         </div>
       </nav>
 
@@ -113,6 +135,28 @@ export default function Header({ isLoggedIn }) {
                     {item.name}
                   </button>
                 ))}
+              </div>
+              <div className="py-6">
+                {isConnected ? (
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-gray-700">
+                      {formatAddress(account)}
+                    </p>
+                    <button
+                      onClick={disconnectWallet}
+                      className="text-sm font-medium text-red-600 bg-red-100 px-3 py-2 rounded-lg hover:bg-red-200 w-full"
+                    >
+                      Disconnect
+                    </button>
+                  </div>
+                ) : !isLoggedIn && (
+                  <a
+                    href="/login"
+                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                  >
+                    Log in
+                  </a>
+                )}
               </div>
             </div>
           </div>

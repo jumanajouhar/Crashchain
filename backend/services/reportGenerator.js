@@ -25,6 +25,26 @@ function generateCrashReport(data, outputPath) {
             doc.font(style.font).fontSize(style.size).lineGap(style.spacing * 12);
         }
 
+        // Function to format analysis data
+        function formatAnalysis(analysis) {
+            if (Array.isArray(analysis)) {
+                return analysis.map(item => {
+                    let text = `File: ${item.file}\n`;
+                    if (typeof item.analysis === 'string') {
+                        text += item.analysis;
+                    } else if (typeof item.analysis === 'object') {
+                        text += JSON.stringify(item.analysis, null, 2);
+                    }
+                    return text;
+                }).join('\n\n');
+            } else if (typeof analysis === 'string') {
+                return analysis;
+            } else if (typeof analysis === 'object') {
+                return JSON.stringify(analysis, null, 2);
+            }
+            return 'No analysis data available';
+        }
+
         // Add title
         applyStyle(styles.title);
         doc.text("Crash Detection Report", { align: "center" });
@@ -58,8 +78,14 @@ function generateCrashReport(data, outputPath) {
         // Add analysis from DeepSeek
         applyStyle(styles.sectionHeader);
         doc.text("DeepSeek Analysis", { align: "left" });
+        doc.moveDown(0.5);
+        
         applyStyle(styles.normal);
-        doc.text(data.analysis);
+        const formattedAnalysis = formatAnalysis(data.analysis);
+        doc.text(formattedAnalysis, {
+            align: 'left',
+            paragraphGap: 5
+        });
         doc.moveDown(1);
 
         // Finalize PDF

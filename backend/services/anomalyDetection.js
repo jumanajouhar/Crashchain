@@ -36,12 +36,17 @@ async function analyzeOBDDataWithDeepSeek(data) {
                 }
             );
 
-            // Log the response for debugging
-            console.log("DeepSeek API Response:", response.data);
+            // Log the entire response for debugging
+            console.log("DeepSeek API Full Response:", JSON.stringify(response.data, null, 2));
 
             // Check if response data and choices are valid
             if (response.data && response.data.choices && Array.isArray(response.data.choices) && response.data.choices.length > 0) {
-                return response.data.choices[0].message.content;
+                const message = response.data.choices[0].message;
+                console.log("DeepSeek Message Object:", JSON.stringify(message, null, 2)); // Detailed log to inspect the message object
+
+                // Assuming the message object has a 'content' property
+                const content = message.content || JSON.stringify(message); // Access the correct property
+                return typeof content === 'string' ? content : JSON.stringify(content);
             } else if (response.data === '') {
                 console.error("Received empty response data:", {
                     status: response.status,

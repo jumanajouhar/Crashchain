@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const HardwareSimulator = () => {
   const [vehicleDetails, setVehicleDetails] = useState({
@@ -15,6 +15,18 @@ const HardwareSimulator = () => {
 
   const [uploadedMediaFile, setUploadedMediaFile] = useState(null);
   const [uploadedDataFile, setUploadedDataFile] = useState(null);
+
+  useEffect(() => {
+    // Automatically set the current date and time
+    const now = new Date();
+    const formattedDate = now.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    const formattedTime = now.toTimeString().split(' ')[0]; // Format: HH:MM:SS
+    setCrashDetails(prev => ({
+      ...prev,
+      date: formattedDate,
+      time: formattedTime
+    }));
+  }, []);
 
   const handleFileUpload = (event, fileType) => {
     const file = event.target.files[0];
@@ -111,6 +123,7 @@ const HardwareSimulator = () => {
               <input
                 type="text"
                 name={name}
+                value={category === 'crash' ? crashDetails[name] : vehicleDetails[name]} // Automatically fill date and time
                 onChange={(e) => handleInputChange(e, category)}
                 className="block w-full border border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-[#6C63FF] focus:border-[#6C63FF] sm:text-sm p-3 bg-[#3B3F5C] text-gray-300"
               />

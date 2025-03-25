@@ -99,19 +99,19 @@ const HardwareSimulator = () => {
         <h3 className="text-3xl font-semibold text-[#6C63FF] mb-6">Event Details</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
           {[
-            'VIN Number',
-            'ECU Identifier',
-            'Distance Traveled',
-            'Date',
-            'Time',
-            'Location'
-          ].map((label, index) => (
+            { label: 'VIN Number', name: 'vinNumber', category: 'vehicle' },
+            { label: 'ECU Identifier', name: 'ecuIdentifier', category: 'vehicle' },
+            { label: 'Distance Traveled', name: 'distanceTraveled', category: 'vehicle' },
+            { label: 'Date', name: 'date', category: 'crash' },
+            { label: 'Time', name: 'time', category: 'crash' },
+            { label: 'Location', name: 'location', category: 'crash' }
+          ].map(({ label, name, category }, index) => (
             <div key={index} className="transition duration-200 ease-in-out transform hover:scale-105">
               <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
               <input
                 type="text"
-                name={label}
-                onChange={(e) => handleInputChange(e, label.includes('VIN') || label.includes('ECU') || label.includes('Distance') ? 'vehicle' : 'crash')}
+                name={name}
+                onChange={(e) => handleInputChange(e, category)}
                 className="block w-full border border-gray-500 rounded-lg shadow-sm focus:ring-2 focus:ring-[#6C63FF] focus:border-[#6C63FF] sm:text-sm p-3 bg-[#3B3F5C] text-gray-300"
               />
             </div>

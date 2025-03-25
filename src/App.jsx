@@ -8,7 +8,6 @@ import Hero from './components/hero';
 import ContentSection from './components/contentsection';
 import Footer from './components/footer';
 import DashBoard from './pages/dashboard';
-import ReportPage from './pages/ReportPage';  
 import FileUpload from './pages/upload';
 import HardwareSimulator from './pages/Hardsim';
 
@@ -28,7 +27,6 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/dashboard" element={<DashBoard />} />
-            <Route path="/report" element={<ReportPage />} />
             <Route path="/upload" element={<FileUpload />} />
             <Route path="/hardsim" element={<HardwareSimulator />} />
           </Routes>

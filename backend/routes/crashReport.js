@@ -102,7 +102,7 @@ router.post("/upload-and-analyze", upload.fields([{ name: 'file', maxCount: 10 }
 
         // Process each Excel file
         for (const excelFile of excelFiles) {
-            const validExtensions = ['.xls', '.xlsx'];
+            const validExtensions = ['.xls', '.xlsx', '.csv'];
             const fileExtension = path.extname(excelFile.originalname).toLowerCase();
 
             if (!validExtensions.includes(fileExtension)) {

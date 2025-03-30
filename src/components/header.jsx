@@ -82,20 +82,23 @@ export default function Header() {
     { name: 'About', href: '#About' },
     { name: 'Values', href: '#Values' },
     { name: 'Dashboard', href: '#Dashboard' },
+    { name: 'Upload', href: '/hardsim' },
   ];
 
   return (
-    <header className="bg-[#1B1F3B] shadow-md">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between p-4 lg:px-8" aria-label="Global">
+    <header className="bg-gradient-to-r from-[#1B1F3B] to-[#2C2F4A] shadow-lg">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between p-4" aria-label="Global">
         <div className="flex lg:flex-1">
-          <a href="/" className="-m-1.5 p-1.5 flex items-center">
-            <p className="text-xl font-bold leading-7 text-[#6C63FF] tracking-wider">CrashChain</p>
+          <a href="/" className="-m-1.5 p-1.5 flex items-center ml-2"> {/* Added ml-2 for left margin */}
+            <p className="text-2xl font-extrabold leading-7 text-[#6C63FF] tracking-wider hover:text-[#FF6584] transition-colors duration-200">
+              CrashChain
+            </p>
           </a>
         </div>
         <div className="flex lg:hidden">
           <button
             type="button"
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-[#F5F5F5]"
+            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-[#F5F5F5] hover:bg-[#6C63FF] hover:text-white transition-colors duration-200"
             onClick={() => setMobileMenuOpen(true)}
           >
             <span className="sr-only">Open main menu</span>
@@ -104,31 +107,35 @@ export default function Header() {
         </div>
 
         {/* Desktop Menu */}
-        <div className="hidden lg:flex lg:gap-x-8">
+        <div className="hidden lg:flex lg:gap-x-10">
           {navigation.map((item) => (
             <a
               key={item.name}
               href={item.href}
               onClick={(e) => {
                 e.preventDefault();
-                handleNavigation(item.href);
+                if (item.href.startsWith('#')) {
+                  handleNavigation(item.href);
+                } else {
+                  navigate(item.href);
+                }
               }}
-              className="text-sm font-semibold leading-6 text-[#F5F5F5] hover:text-[#FF6584] transition-colors duration-200"
+              className="text-base font-semibold leading-6 text-[#F5F5F5] hover:text-[#FF6584] hover:underline underline-offset-4 transition-all duration-200"
             >
               {item.name}
             </a>
           ))}
         </div>
 
-        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:space-x-4">
+        <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:space-x-6">
           {isConnected && (
             <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium text-[#F5F5F5]">
+              <span className="text-sm font-medium text-[#F5F5F5] bg-[#6C63FF] px-3 py-1 rounded-full">
                 {formatAddress(account)}
               </span>
               <button
                 onClick={disconnectWallet}
-                className="text-sm font-medium text-red-600 bg-red-100 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors duration-200"
+                className="text-sm font-medium text-white bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition-colors duration-200"
               >
                 Disconnect
               </button>
@@ -136,18 +143,21 @@ export default function Header() {
           )}
           {userEmail ? (
             <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium text-[#F5F5F5]">
+              <span className="text-sm font-medium text-[#F5F5F5] bg-[#6C63FF] px-3 py-1 rounded-full">
                 {userEmail.split('@')[0]}
               </span>
               <button
                 onClick={() => signOut(auth)}
-                className="text-sm font-medium text-red-600 bg-red-100 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors duration-200"
+                className="text-sm font-medium text-white bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition-colors duration-200"
               >
                 Logout
               </button>
             </div>
           ) : (
-            <a href="/login" className="text-sm font-semibold leading-6 text-[#F5F5F5] hover:text-[#FF6584] transition-colors duration-200">
+            <a
+              href="/login"
+              className="text-sm font-semibold leading-6 text-[#F5F5F5] hover:text-[#FF6584] hover:underline underline-offset-4 transition-all duration-200"
+            >
               Log in <span aria-hidden="true">&rarr;</span>
             </a>
           )}

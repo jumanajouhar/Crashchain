@@ -73,7 +73,7 @@ const Dashboard = () => {
             onClick={() => navigate('/hardsim')}
             className="bg-[#6C63FF] text-white px-5 py-2 rounded-lg hover:bg-[#FF6584] transition-colors duration-200"
           >
-            Hardware Simulator
+            Data Upload Page
           </button>
 
           <h1 className="flex-1 text-center text-3xl font-bold text-[#6C63FF]">

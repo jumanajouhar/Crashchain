@@ -52,17 +52,17 @@ The system captures comprehensive crash data including:
 ```bash:terminal
 npm install
 ```
-
-3. Configure environment variables:
-
-- CONTRACT_ADDRESS
-- Other necessary environment configs
-
-4. Deploy smart contracts:
+3. Deploy smart contracts:
 
 ```bash:terminal
 truffle migrate
 ```
+4. Configure environment variables:
+
+- CONTRACT_ADDRESS in .env
+- Other necessary environment configs
+
+
 
 5. Start the server:
 

@@ -96,7 +96,7 @@ const HardwareSimulator = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#1B1F3B] to-[#2C2F48] relative">
+    <div className="h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-[#000000] to-[#000000] relative">
       {isLoading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="animate-spin rounded-full h-20 w-20 border-t-4 border-b-4 border-[#6C63FF]"></div>

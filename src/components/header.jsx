@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   Dialog,
@@ -86,7 +87,7 @@ export default function Header() {
   ];
 
   return (
-    <header className="bg-gradient-to-r from-[#1B1F3B] to-[#2C2F4A] shadow-lg">
+    <header className="bg-gradient-to-r from-[#000000] to-[#000000] shadow-lg">
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-4" aria-label="Global">
         <div className="flex lg:flex-1">
           <a href="/" className="-m-1.5 p-1.5 flex items-center ml-2"> {/* Added ml-2 for left margin */}

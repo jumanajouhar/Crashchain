@@ -65,7 +65,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="p-6 bg-[#1B1F3B] min-h-screen flex flex-col items-center">
+    <div className="p-6 bg-[#000000] min-h-screen flex flex-col items-center">
       <div className="max-w-6xl w-full space-y-6 bg-[#2C2F48] p-6 rounded-lg shadow-lg">
         {/* Top Section: Button on Left, Dashboard Title Centered */}
         <div className="flex items-center justify-between">

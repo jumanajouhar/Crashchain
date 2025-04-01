@@ -55,7 +55,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-[#1B1F3B]">
+    <div className="flex justify-center items-center h-screen bg-[#000000]">
       <div className="p-10 rounded-lg shadow-lg text-center w-96 bg-[#2C2F48]">
         {isResettingPassword ? (
           <>

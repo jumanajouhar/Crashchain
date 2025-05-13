@@ -55,7 +55,7 @@ function ContentSection() {
         <p className="mt-6 text-xl leading-8 text-[#F5F5F5]">
           Our mission is to revolutionize accident forensics by leveraging blockchain and advanced data analysis to
           ensure transparency and accuracy in investigations. We aim to provide unparalleled insights and secure,
-          tamper-proof solutions to our clients in the forensic and automotive industries.
+          tamper proof solutions to our clients in the forensic and automotive industries.
         </p>
       </div>
 

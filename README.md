@@ -69,25 +69,3 @@ truffle migrate
 ```bash:terminal
 npm start
 ```
-
-## API Endpoints
-
-- Crash Report Submission
-- Data Verification
-- Report Generation
-- Anomaly Detection
-
-## Security Considerations
-
-- All crash data is verified on the blockchain
-- Secure file storage and handling
-- Data integrity checks
-
-
-## License
-
-MIT License
-
-## Contact
-
-For questions and support, please open an issue in the repository.
